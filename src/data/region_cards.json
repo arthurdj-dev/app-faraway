@@ -1,0 +1,10 @@
+{
+  "1": {
+    "biome": "",
+    "duration": 1,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": { "stones": 0, "chimeras": 0, "thistles": 0 },
+    "quests": []
+  }
+}

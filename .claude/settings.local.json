@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:share.google)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:www.regledujeu.fr)",
+      "WebSearch",
+      "WebFetch(domain:officialgamerules.org)",
+      "WebFetch(domain:www.regles-du-jeu.net)",
+      "WebFetch(domain:pakufuda.store)",
+      "WebFetch(domain:en.boardgamearena.com)",
+      "WebFetch(domain:www.rulespal.com)",
+      "WebFetch(domain:en.doc.boardgamearena.com)",
+      "WebFetch(domain:www.ludum.fr)",
+      "Bash(npm install:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\arthu\\Projets\\app-faraway\\src"
+    ]
+  }
+}
