@@ -3,7 +3,7 @@
     "name": "app-faraway",
     "slug": "app-faraway",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
