@@ -49,7 +49,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -78,7 +79,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -89,7 +91,8 @@
           "points": 2,
           "resource": "stones"
         }
-      }]
+      }
+    ]
   },
   "6": {
     "biome": null,
@@ -102,7 +105,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -112,7 +116,8 @@
           "type": "per_night",
           "points": 1
         }
-      }]
+      }
+    ]
   },
   "7": {
     "biome": "rouge",
@@ -125,7 +130,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -152,7 +158,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -176,7 +183,8 @@
         "thistles": 1
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -188,7 +196,7 @@
           "resource": "thistles"
         }
       }
-]
+    ]
   },
   "10": {
     "biome": "vert",
@@ -215,7 +223,7 @@
       }
     },
     "quests": [
-            {
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -243,7 +251,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -273,7 +282,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -283,10 +293,11 @@
           "type": "per_biome",
           "points": 1,
           "biomes": [
-            ""
+            "noColor"
           ]
         }
-      }]
+      }
+    ]
   },
   "14": {
     "biome": null,
@@ -312,7 +323,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -324,7 +336,6 @@
           "resource": "chimeras"
         }
       }
-
     ]
   },
   "16": {
@@ -338,7 +349,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -391,7 +403,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -404,7 +417,8 @@
             "vert"
           ]
         }
-      }]
+      }
+    ]
   },
   "20": {
     "biome": "bleu",
@@ -443,7 +457,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -454,7 +469,7 @@
           "points": 1
         }
       }
-]
+    ]
   },
   "23": {
     "biome": "bleu",
@@ -467,7 +482,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -477,11 +493,11 @@
           "type": "per_biome",
           "points": 2,
           "biomes": [
-            ""
+            "noColor"
           ]
         }
       }
-]
+    ]
   },
   "24": {
     "biome": "rouge",
@@ -507,7 +523,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -523,7 +540,8 @@
             "bleu"
           ]
         }
-      }]
+      }
+    ]
   },
   "26": {
     "biome": "jaune",
@@ -536,7 +554,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -549,7 +568,8 @@
             "jaune"
           ]
         }
-      }]
+      }
+    ]
   },
   "27": {
     "biome": null,
@@ -562,7 +582,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -576,7 +597,8 @@
             "jaune"
           ]
         }
-      }]
+      }
+    ]
   },
   "28": {
     "biome": "jaune",
@@ -602,7 +624,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -626,7 +649,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -637,7 +661,8 @@
           "points": 2,
           "resource": "thistles"
         }
-      }]
+      }
+    ]
   },
   "31": {
     "biome": null,
@@ -662,7 +687,7 @@
           "points": 2
         }
       }
-]
+    ]
   },
   "32": {
     "biome": "rouge",
@@ -675,7 +700,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -691,7 +717,7 @@
           }
         }
       }
-]
+    ]
   },
   "33": {
     "biome": null,
@@ -704,7 +730,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -715,7 +742,8 @@
           "points": 1,
           "resource": "stones"
         }
-      }]
+      }
+    ]
   },
   "34": {
     "biome": "vert",
@@ -754,7 +782,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -782,7 +811,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -810,7 +840,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -838,7 +869,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -849,7 +881,7 @@
           "points": 5
         }
       }
-]
+    ]
   },
   "40": {
     "biome": null,
@@ -901,7 +933,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -930,7 +963,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -955,7 +989,8 @@
         "thistles": 0
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -983,7 +1018,8 @@
         "thistles": 1
       }
     },
-    "quests": [      {
+    "quests": [
+      {
         "condition": {
           "stones": 0,
           "chimeras": 0,
@@ -993,7 +1029,7 @@
           "type": "per_biome",
           "points": 1,
           "biomes": [
-            ""
+            "noColor"
           ]
         }
       }
@@ -1097,7 +1133,7 @@
           "type": "per_biome",
           "points": 1,
           "biomes": [
-            ""
+            "noColor"
           ]
         }
       }

@@ -6,7 +6,7 @@
  * Étape 3 : Résultats avec correction manuelle optionnelle
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { scanTableau } from '../utils/tableauScanner';
-import { getGroqApiKey } from '../utils/storage';
+import { getGroqApiKey, getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 
 const REGION_COUNT = 8;
@@ -146,6 +146,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const [photoUri, setPhotoUri] = useState(null);
   const [results, setResults] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [skipGuide, setSkipGuide] = useState(false);
 
   const reset = () => {
     setStep('instruction');
@@ -155,6 +156,16 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   };
 
   const handleClose = () => { reset(); onClose(); };
+
+  // Charge la préférence "ne plus afficher" à l'ouverture
+  useEffect(() => {
+    if (visible) {
+      getScanSkipGuide().then((skip) => {
+        setSkipGuide(skip);
+        if (skip) openCamera();
+      });
+    }
+  }, [visible]);
 
   const openCamera = async () => {
     const groqKey = await getGroqApiKey();
@@ -193,7 +204,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.92 });
       setPhotoUri(photo.uri);
       await exitCamera('processing');
-      const res = await scanTableau(photo.uri, { width: photo.width, height: photo.height });
+      const res = await scanTableau(photo.uri);
       setResults(res);
       setStep('results');
     } catch (e) {
@@ -286,13 +297,23 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
             <TouchableOpacity style={s.primaryBtn} onPress={openCamera}>
               <Text style={s.primaryBtnTxt}>📷 Scanner</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={s.skipGuideBtn}
+              onPress={async () => {
+                await setScanSkipGuide(true);
+                setSkipGuide(true);
+              }}
+            >
+              <Text style={s.skipGuideTxt}>Ne plus afficher ce guide</Text>
+            </TouchableOpacity>
           </View>
         )}
 
         {/* ── Étape 2 : Caméra (plein écran, paysage) ── */}
         {step === 'camera' && permission?.granted && (
           <View style={s.cameraContainer}>
-            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} />
 
             {/* Cadre de visée : cellules carrées calculées dynamiquement */}
             <View style={s.cameraOverlay}>
@@ -453,6 +474,9 @@ const s = StyleSheet.create({
   },
   primaryBtnDisabled: { backgroundColor: COLORS.disabled },
   primaryBtnTxt: { color: COLORS.white, fontWeight: '700', fontSize: FONTS.body },
+
+  skipGuideBtn: { alignItems: 'center', paddingVertical: SPACING.xs },
+  skipGuideTxt: { color: COLORS.textLight, fontSize: FONTS.small },
 
   secondaryBtn: {
     borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: 10,

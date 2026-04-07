@@ -1,150 +1,175 @@
 /**
- * tableauScanner.js
+ * tableauScanner.js — Reconnaissance des cartes via Groq Llama Vision
  *
- * Disposition attendue du plateau :
- *
- *   ┌────┬────┬────┐          ← zone HAUTE  : sanctuaires en ligne
- *   │ S1 │ S2 │ S3 │            (nombre variable, même largeur que les régions)
- *   ├────┼────┼────┼────┐
- *   │ R1 │ R2 │ R3 │ R4 │    ← zone MILIEU : régions 1-4
- *   ├────┼────┼────┼────┤
- *   │ R5 │ R6 │ R7 │ R8 │    ← zone BAS    : régions 5-8
- *   └────┴────┴────┴────┘
- *
- * Logique :
- *  1. cardWidth  = imageWidth / 4   (4 cartes Région par ligne)
- *  2. zoneHeight = imageHeight / 3  (3 bandes horizontales égales)
- *  3. Régions  → OCR sur chaque bande, reconnaît le numéro
- *  4. Sanctuaires → pHash sur les bandes restantes
- *     Le nombre de sanctuaires est détecté automatiquement :
- *     on essaie jusqu'à MAX_SANCTUARIES et on garde ceux dont
- *     la distance pHash est sous le seuil LOW_CONFIDENCE.
+ * Flow :
+ *  1. Redimensionne la photo (1280px) et encode en base64
+ *  2. Envoie à Groq Llama Vision avec un prompt structuré
+ *  3. Parse le JSON retourné par le modèle
+ *  4. Régions  → id lu directement depuis la réponse
+ *  5. Sanctuaires → matching par biome + ressources contre sanctuary_cards.json
  */
 
 import * as ImageManipulator from 'expo-image-manipulator';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
-import { computeHash, hammingDistance } from './imageHash';
-import sanctuaryHashes from '../data/sanctuary_hashes.json';
+import { getGroqApiKey } from './storage';
+import sanctuaryCards from '../data/sanctuary_cards.json';
 
-const REGION_CARD_COUNT  = 8;
-const CARDS_PER_ROW      = 4;
-const MAX_SANCTUARIES    = 8;
-const HIGH_CONFIDENCE    = 10;
-const LOW_CONFIDENCE     = 20;
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const REGION_COUNT = 8;
 
-// ─── Découpe d'une bande ───────────────────────────────────────────────────
+// ─── Utilitaires ──────────────────────────────────────────────────────────
 
-async function cropZone(imageUri, originX, originY, width, height, imgW, imgH) {
-  const ox = Math.max(0, Math.round(originX));
-  const oy = Math.max(0, Math.round(originY));
-  const w  = Math.min(Math.round(width),  imgW - ox);
-  const h  = Math.min(Math.round(height), imgH - oy);
-
-  const { uri } = await ImageManipulator.manipulateAsync(
-    imageUri,
-    [{ crop: { originX: ox, originY: oy, width: w, height: h } }],
-    { format: ImageManipulator.SaveFormat.JPEG, compress: 0.9 }
+async function photoToBase64(uri) {
+  const result = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: 1280 } }],
+    { format: ImageManipulator.SaveFormat.JPEG, compress: 0.85, base64: true }
   );
-  return uri;
+  return result.base64;
 }
 
-// ─── OCR : extrait le numéro de carte depuis une bande ────────────────────
-
-async function ocrNumber(stripUri) {
-  const result = await TextRecognition.recognize(stripUri);
-  const candidates = [];
-
-  for (const block of result.blocks) {
-    for (const line of block.lines) {
-      const raw = line.text.trim().replace(/\s/g, '');
-      const num = parseInt(raw);
-      if (!isNaN(num) && num >= 1 && num <= 200 && raw === String(num)) {
-        candidates.push(num);
-      }
-    }
-  }
-
-  if (candidates.length === 0) return null;
-  return candidates.sort((a, b) => b - a)[0];
+// Parse le JSON depuis la réponse brute du modèle (supporte les blocs markdown)
+function parseModelJSON(text) {
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('Réponse invalide du modèle Groq');
+  return JSON.parse(match[0]);
 }
 
-// ─── pHash : identifie un sanctuaire ──────────────────────────────────────
+// ─── Appel Groq Vision ─────────────────────────────────────────────────────
 
-async function recognizeSanctuary(stripUri) {
-  const hash = await computeHash(stripUri);
-  const candidates = [];
+async function callGroqVision(base64Image, apiKey) {
+  const prompt = `This is a photo of a Faraway board game player's tableau.
 
-  for (const [idStr, { hashes }] of Object.entries(sanctuaryHashes)) {
-    const id = parseInt(idStr);
-    const minDist = Math.min(...hashes.map((h) => hammingDistance(hash, h)));
-    candidates.push({ id, distance: minDist });
+Board layout (3 rows, left to right):
+- TOP ROW: Sanctuary cards (variable count, 1–8 cards)
+- MIDDLE ROW: Region cards at positions 1, 2, 3, 4
+- BOTTOM ROW: Region cards at positions 5, 6, 7, 8
+
+TASK 1 — REGION CARDS (middle + bottom rows):
+Each region card has a unique number (1–68) printed prominently in large text.
+Read the number on each card. If a card is missing or unreadable, use null.
+
+TASK 2 — SANCTUARY CARDS (top row):
+For each sanctuary card (left to right), identify:
+- biome: the colored border/frame — "vert" (green), "jaune" (yellow), "rouge" (red), "bleu" (blue), or null if no colored border
+- stones: count of rock/stone resource symbols
+- chimeras: count of creature/animal resource symbols
+- thistles: count of thistle/golden plant resource symbols
+- clues: count of magnifying glass or clue symbols
+
+Return ONLY valid JSON, no explanation, no markdown:
+{
+  "regions": [
+    {"position": 1, "id": 42},
+    {"position": 2, "id": 15},
+    {"position": 3, "id": 7},
+    {"position": 4, "id": 31},
+    {"position": 5, "id": 55},
+    {"position": 6, "id": 12},
+    {"position": 7, "id": 3},
+    {"position": 8, "id": 19}
+  ],
+  "sanctuaries": [
+    {"position": 1, "biome": "vert", "stones": 1, "chimeras": 0, "thistles": 2, "clues": 1},
+    {"position": 2, "biome": null, "stones": 0, "chimeras": 1, "thistles": 0, "clues": 0}
+  ]
+}`;
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: VISION_MODEL,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } },
+        ],
+      }],
+      temperature: 0,
+      max_tokens: 1024,
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Groq ${response.status}: ${text}`);
   }
 
-  candidates.sort((a, b) => a.distance - b.distance);
-  const best = candidates[0];
-  if (!best) return { id: null, confidence: 'none', candidates: [] };
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// ─── Matching sanctuaire ───────────────────────────────────────────────────
+
+function matchSanctuary(desc) {
+  const candidates = Object.entries(sanctuaryCards).map(([idStr, card]) => {
+    const id  = parseInt(idStr);
+    const res = card.bonus?.resources ?? {};
+    let score = 0;
+
+    // Biome : discriminant fort
+    if (card.biome === (desc.biome ?? null)) score += 4;
+
+    // Ressources : on pénalise chaque écart
+    score -= Math.abs((res.stones   ?? 0) - (desc.stones   ?? 0));
+    score -= Math.abs((res.chimeras ?? 0) - (desc.chimeras ?? 0));
+    score -= Math.abs((res.thistles ?? 0) - (desc.thistles ?? 0));
+    score -= Math.abs((card.bonus?.clues ?? 0) - (desc.clues ?? 0));
+
+    return { id, score };
+  });
+
+  candidates.sort((a, b) => b.score - a.score);
+  const best   = candidates[0];
+  const second = candidates[1];
 
   const confidence =
-    best.distance <= HIGH_CONFIDENCE ? 'high' :
-    best.distance <= LOW_CONFIDENCE  ? 'low'  : 'none';
+    best.score >= 3 && best.score > second.score ? 'high' :
+    best.score >= 0                               ? 'low'  : 'none';
 
   return {
     id: confidence !== 'none' ? best.id : null,
     confidence,
-    distance: best.distance,
     candidates: candidates.slice(0, 3),
   };
 }
 
 // ─── Fonction principale ───────────────────────────────────────────────────
 
-export async function scanTableau(photoUri, dimensions) {
-  const { width: imgW, height: imgH } = dimensions;
+export async function scanTableau(photoUri) {
+  const apiKey = await getGroqApiKey();
+  if (!apiKey) throw new Error('Clé Groq manquante');
 
-  const cardW    = imgW / CARDS_PER_ROW;
-  const zoneH    = imgH / 3;
+  const base64 = await photoToBase64(photoUri);
+  const raw    = await callGroqVision(base64, apiKey);
+  const parsed = parseModelJSON(raw);
 
   const results = [];
 
-  // ── Régions ──────────────────────────────────────────────────────────────
-  for (let row = 0; row < 2; row++) {
-    const originY = (row + 1) * zoneH;
-
-    for (let col = 0; col < CARDS_PER_ROW; col++) {
-      const cardIndex = row * CARDS_PER_ROW + col;
-      const originX   = col * cardW;
-
-      const stripUri = await cropZone(photoUri, originX, originY, cardW, zoneH, imgW, imgH);
-      const id       = await ocrNumber(stripUri);
-
-      results.push({
-        index:      cardIndex,
-        type:       'region',
-        id,
-        confidence: id !== null ? 'high' : 'none',
-        stripUri,
-        row,
-        col,
-      });
-    }
+  // Régions
+  for (const r of parsed.regions ?? []) {
+    results.push({
+      index:      r.position - 1,
+      type:       'region',
+      id:         r.id ?? null,
+      confidence: r.id != null ? 'high' : 'none',
+      row:        r.position <= 4 ? 0 : 1,
+      col:        (r.position - 1) % 4,
+    });
   }
 
-  // ── Sanctuaires ──────────────────────────────────────────────────────────
-  for (let s = 0; s < MAX_SANCTUARIES; s++) {
-    const originX = s * cardW;
-
-    if (originX + cardW / 2 > imgW) break;
-
-    const stripUri    = await cropZone(photoUri, originX, 0, cardW, zoneH, imgW, imgH);
-    const recognition = await recognizeSanctuary(stripUri);
-
-    if (recognition.confidence === 'none') break;
-
+  // Sanctuaires
+  for (const s of parsed.sanctuaries ?? []) {
+    const match = matchSanctuary(s);
     results.push({
-      index:  REGION_CARD_COUNT + s,
-      type:   'sanctuary',
-      ...recognition,
-      stripUri,
+      index: REGION_COUNT + s.position - 1,
+      type:  'sanctuary',
+      ...match,
     });
   }
 

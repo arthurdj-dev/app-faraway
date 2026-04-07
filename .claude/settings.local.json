@@ -14,7 +14,8 @@
       "WebFetch(domain:www.ludum.fr)",
       "Bash(npm install:*)",
       "Bash(node /c/Users/arthu/Projets/app-faraway/scripts/generateCardTemplates.js)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Bash(python3 -c ':*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\arthu\\Projets\\app-faraway\\src"

@@ -29,7 +29,7 @@ function buildContext(visibleRegionIds, sanctuaryIds) {
     thistles: 0,
     clues:    0,
     nights:   0,           // nb de cartes nuit (régions + sanctuaires bonus.night)
-    biomes:   { vert: 0, jaune: 0, rouge: 0, bleu: 0 },
+    biomes:   { vert: 0, jaune: 0, rouge: 0, bleu: 0, noColor: 0 },
     regionCount: visibleRegionIds.length,
   };
 
@@ -43,8 +43,10 @@ function buildContext(visibleRegionIds, sanctuaryIds) {
     ctx.thistles += card.resources.thistles;
     ctx.clues    += card.clues;
     if (card.timeOfDay === 'night') ctx.nights++;
-    if (card.biome && ctx.biomes[card.biome] !== undefined) {
-      ctx.biomes[card.biome]++;
+    if (card.biome) {
+      if (ctx.biomes[card.biome] !== undefined) ctx.biomes[card.biome]++;
+    } else {
+      ctx.biomes.noColor++;
     }
   }
 
@@ -59,8 +61,10 @@ function buildContext(visibleRegionIds, sanctuaryIds) {
     ctx.clues    += card.bonus.clues;
     if (card.bonus.night) ctx.nights += card.bonus.night;
     // Un sanctuaire avec un biome compte comme une carte de ce biome
-    if (card.biome && ctx.biomes[card.biome] !== undefined) {
-      ctx.biomes[card.biome]++;
+    if (card.biome) {
+      if (ctx.biomes[card.biome] !== undefined) ctx.biomes[card.biome]++;
+    } else {
+      ctx.biomes.noColor++;
     }
   }
 
