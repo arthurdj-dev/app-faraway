@@ -1,10 +1,1741 @@
 {
-  "1": {
+  "0": {
     "biome": "",
+    "duration": 0,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 1,
+      "thistles": 1
+    },
+    "quests": []
+  },
+  "1": {
+    "biome": "rouge",
     "duration": 1,
     "timeOfDay": "day",
     "clues": 0,
-    "resources": { "stones": 0, "chimeras": 0, "thistles": 0 },
+    "resources": {
+      "stones": 1,
+      "chimeras": 1,
+      "thistles": 0
+    },
     "quests": []
+  },
+  "2": {
+    "biome": "bleu",
+    "duration": 2,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 2,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": []
+  },
+  "3": {
+    "biome": "vert",
+    "duration": 3,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 4
+        }
+      }]
+  },
+  "4": {
+    "biome": "rouge",
+    "duration": 4,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": []
+  },
+  "5": {
+    "biome": "vert",
+    "duration": 5,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 2
+        }
+      }]
+  },
+  "6": {
+    "biome": "bleu",
+    "duration": 6,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": []
+  },
+  "7": {
+    "biome": "rouge",
+    "duration": 7,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 1
+    },
+    "quests": []
+  },
+  "8": {
+    "biome": "vert",
+    "duration": 8,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": []
+  },
+  "9": {
+    "biome": "bleu",
+    "duration": 9,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [
+      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 5
+        }
+      }
+    ]
+  },
+  "10": {
+    "biome": "rouge",
+    "duration": 10,
+    "timeOfDay": "jour",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      
+      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 3
+        }
+      }
+    ]
+  },
+  "11": {
+    "biome": "vert",
+    "duration": 11,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [
+            {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 2
+        }
+      }
+    ]
+  },
+  "12": {
+    "biome": "jaune",
+    "duration": 12,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": []
+  },
+  "13": {
+    "biome": "bleu",
+    "duration": 13,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [
+            {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "stones"
+        }
+      }
+    ]
+  },
+  "14": {
+    "biome": "rouge",
+    "duration": 14,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 2
+        }
+      }
+]
+  },
+  "15": {
+    "biome": "vert",
+    "duration": 15,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "chimeras"
+        }
+      }
+    ]
+  },
+  "16": {
+    "biome": "rouge",
+    "duration": 16,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "chimeras"
+        }
+      }
+    ]
+  },
+  "17": {
+    "biome": "bleu",
+    "duration": 17,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 2,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "stones"
+        }
+      }]
+  },
+  "18": {
+    "biome": "vert",
+    "duration": 18,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome_group",
+          "points": 10,
+          "biomes": [
+            "jaune",
+            "rouge",
+            "vert",
+            "bleu"
+          ]
+        }
+      }]
+  },
+  "19": {
+    "biome": "rouge",
+    "duration": 19,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "thistles"
+        }
+      }]
+  },
+  "20": {
+    "biome": "vert",
+    "duration": 20,
+    "timeOfDay": "night",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 1,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 2
+        }
+      }]
+  },
+  "21": {
+    "biome": "bleu",
+    "duration": 21,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 8
+        }
+      }]
+  },
+  "22": {
+    "biome": "vert",
+    "duration": 22,
+    "timeOfDay": "night",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 1
+        }
+      }
+]
+  },
+  "23": {
+    "biome": "rouge",
+    "duration": 23,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome_group",
+          "points": 10,
+          "biomes": [
+            "jaune",
+            "rouge",
+            "vert",
+            "bleu"
+          ]
+        }
+      }]
+  },
+  "24": {
+    "biome": "bleu",
+    "duration": 24,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 1,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 2
+        }
+      }]
+  },
+  "25": {
+    "biome": "jaune",
+    "duration": 25,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "jaune",
+            "vert"
+          ]
+        }
+      }]
+  },
+  "26": {
+    "biome": "rouge",
+    "duration": 26,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "thistles"
+        }
+      }]
+  },
+  "27": {
+    "biome": "jaune",
+    "duration": 27,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [     {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "bleu",
+            "jaune"
+          ]
+        }
+      }]
+  },
+  "28": {
+    "biome": "rouge",
+    "duration": 28,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "chimeras"
+        }
+      }
+]
+  },
+  "29": {
+    "biome": "jaune",
+    "duration": 29,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "thistles"
+        }
+      }
+]
+  },
+  "30": {
+    "biome": "rouge",
+    "duration": 30,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "stone"
+        }
+      }
+]
+  },
+  "31": {
+    "biome": "jaune",
+    "duration": 31,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "rouge",
+            "jaune"
+          ]
+        }
+      }
+]
+  },
+  "32": {
+    "biome": "rouge",
+    "duration": 32,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 3,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 7
+        }
+      }]
+  },
+  "33": {
+    "biome": "jaune",
+    "duration": 33,
+    "timeOfDay": "night",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "thistles"
+        }
+      }]
+  },
+  "34": {
+    "biome": "vert",
+    "duration": 34,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "chimeras"
+        }
+      }]
+  },
+  "35": {
+    "biome": "jaune",
+    "duration": 35,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome_group",
+          "points": 10,
+          "biomes": [
+            "jaune",
+            "rouge",
+            "vert",
+            "bleu"
+          ]
+        }
+      }]
+  },
+  "36": {
+    "biome": "rouge",
+    "duration": 36,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 2,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 4,
+          "resource": "thistles"
+        }
+      }]
+  },
+  "37": {
+    "biome": "jaune",
+    "duration": 37,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 3
+        }
+      }]
+  },
+  "38": {
+    "biome": "vert",
+    "duration": 38,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 1,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 3
+        }
+      }]
+  },
+  "39": {
+    "biome": "rouge",
+    "duration": 39,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 2,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 9
+        }
+      }]
+  },
+  "40": {
+    "biome": "bleu",
+    "duration": 40,
+    "timeOfDay": "nuit",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 1,
+          "chimeras": 1,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 3
+        }
+      }]
+  },
+  "41": {
+    "biome": "vert",
+    "duration": 41,
+    "timeOfDay": "jour",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 1,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 4
+        }
+      }]
+  },
+  "42": {
+    "biome": "jaune",
+    "duration": 42,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 1,
+          "chimeras": 1,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 2,
+          "biomes": [
+            "vert",
+            "jaune"
+          ]
+        }
+      }
+]
+  },
+  "43": {
+    "biome": "bleu",
+    "duration": 43,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome_group",
+          "points": 10,
+          "biomes": [
+            "jaune",
+            "rouge",
+            "vert",
+            "bleu"
+          ]
+        }
+      }]
+  },
+  "44": {
+    "biome": "jaune",
+    "duration": 44,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 1,
+          "chimeras": 0,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 2,
+          "biomes": [
+            "bleu",
+            "jaune"
+          ]
+        }
+      }]
+  },
+  "45": {
+    "biome": "vert",
+    "duration": 45,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 13,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 13
+        }
+      }]
+  },
+  "46": {
+    "biome": "bleu",
+    "duration": 46,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 1,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 10
+        }
+      }]
+  },
+  "47": {
+    "biome": "jaune",
+    "duration": 47,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 1,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 2,
+          "biomes": [
+            "rouge",
+            "jaune"
+          ]
+        }
+      }]
+  },
+  "48": {
+    "biome": "rouge",
+    "duration": 48,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "stones"
+        }
+      }]
+  },
+  "49": {
+    "biome": "bleu",
+    "duration": 49,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 0,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 12
+        }
+      }]
+  },
+  "50": {
+    "biome": "jaune",
+    "duration": 50,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 4,
+          "biomes": [
+            "vert"
+          ]
+        }
+      }
+]
+  },
+  "51": {
+    "biome": "bleu",
+    "duration": 51,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 4,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 14
+        }
+      }]
+  },
+  "52": {
+    "biome": "rouge",
+    "duration": 52,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 3,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 4,
+          "resource": "chimeras"
+        }
+      }]
+  },
+  "53": {
+    "biome": "jaune",
+    "duration": 53,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 4,
+          "biomes": [
+            "rouge"
+          ]
+        }
+      }]
+  },
+  "54": {
+    "biome": "vert",
+    "duration": 54,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 4
+        }
+      }]
+  },
+  "55": {
+    "biome": "bleu",
+    "duration": 55,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 1,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 3,
+          "resource": "stones"
+        }
+      }]
+  },
+  "56": {
+    "biome": "jaune",
+    "duration": 56,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 1,
+          "chimeras": 2,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 4,
+          "biomes": [
+            "bleu"
+          ]
+        }
+      }]
+  },
+  "57": {
+    "biome": "rouge",
+    "duration": 57,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 3
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 4,
+          "resource": "stones"
+        }
+      }
+]
+  },
+  "58": {
+    "biome": "vert",
+    "duration": 58,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 3,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 3
+        }
+      }]
+  },
+  "59": {
+    "biome": "jaune",
+    "duration": 59,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 1,
+          "chimeras": 3,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 3,
+          "biomes": [
+            "rouge",
+            "jaune"
+          ]
+        }
+      }]
+  },
+  "60": {
+    "biome": "bleu",
+    "duration": 60,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 2,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 16
+        }
+      }]
+  },
+  "61": {
+    "biome": "vert",
+    "duration": 61,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 4,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 17
+        }
+      }]
+  },
+  "62": {
+    "biome": "jaune",
+    "duration": 62,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 3
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 3,
+          "biomes": [
+            "bleu",
+            "jaune"
+          ]
+        }
+      }]
+  },
+  "63": {
+    "biome": "vert",
+    "duration": 63,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 2,
+          "thistles": 1
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 15
+        }
+      }]
+  },
+  "64": {
+    "biome": "bleu",
+    "duration": 64,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 0,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 18
+        }
+      }]
+  },
+  "65": {
+    "biome": "jaune",
+    "duration": 65,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 3
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 3,
+          "biomes": [
+            "vert",
+            "jaune"
+          ]
+        }
+      }]
+  },
+  "66": {
+    "biome": "bleu",
+    "duration": 66,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 4,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 20
+        }
+      }]
+  },
+  "67": {
+    "biome": "vert",
+    "duration": 67,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 2,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 19
+        }
+      }]
+  },
+  "68": {
+    "biome": "bleu",
+    "duration": 68,
+    "timeOfDay": "day",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 5,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 24
+        }
+      }]
+  },
+  "69": {
+    "biome": "rouge",
+    "duration": 69,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource_group",
+          "points": 7,
+          "resources": {
+            "stones": 1,
+            "chimeras": 1,
+            "thistles": 1
+          }
+        }
+      }]
+  },
+  "70": {
+    "biome": "",
+    "duration": 70,
+    "timeOfDay": "day",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 6
+        }
+      }]
+  },
+  "71": {
+    "biome": "vert",
+    "duration": 71,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 1,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource_group",
+          "points": 7,
+          "resources": {
+            "stones": 1,
+            "chimeras": 1,
+            "thistles": 1
+          }
+        }
+      }]
+  },
+  "72": {
+    "biome": "",
+    "duration": 72,
+    "timeOfDay": "night",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 5,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 26
+        }
+      }]
+  },
+  "73": {
+    "biome": "jaune",
+    "duration": 73,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 1,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 4
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 5,
+          "biomes": [
+            ""
+          ]
+        }
+      }]
+  },
+  "74": {
+    "biome": "",
+    "duration": 74,
+    "timeOfDay": "night",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 1
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource_group",
+          "points": 7,
+          "resources": {
+            "stones": 1,
+            "chimeras": 1,
+            "thistles": 1
+          }
+        }
+      }]
+  },
+  "75": {
+    "biome": "bleu",
+    "duration": 75,
+    "timeOfDay": "night",
+    "clues": 1,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 6,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 28
+        }
+      }]
+  },
+  "76": {
+    "biome": "",
+    "duration": 76,
+    "timeOfDay": "nuit",
+    "clues": 0,
+    "resources": {
+      "stones": 0,
+      "chimeras": 0,
+      "thistles": 0
+    },
+    "quests": [      {
+        "condition": {
+          "stones": 2,
+          "chimeras": 2,
+          "thistles": 2
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 4,
+          "biomes": [
+            ""
+          ]
+        }
+      }]
   }
 }

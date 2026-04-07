@@ -6,7 +6,7 @@
  * Étape 3 : Résultats avec correction manuelle optionnelle
  */
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -136,6 +137,7 @@ const rc = StyleSheet.create({
 
 export default function ScanModal({ visible, playerName, onClose, onComplete }) {
   const insets = useSafeAreaInsets();
+  const { width: winW, height: winH } = useWindowDimensions();
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -201,18 +203,31 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
 
   const allIdentified = results.length > 0 && results.every((r) => r.id !== null);
 
+  // Dimensions du cadre caméra en paysage : cellules carrées
+  // On contraint cellSize pour que le cadre tienne dans les deux axes.
+  const shutterAreaW = 80;
+  const PADDING = 24; // marge autour du cadre
+  const availW = winW - shutterAreaW - insets.left - insets.right - PADDING * 2;
+  const availH = winH - insets.top - insets.bottom - PADDING * 2;
+  // 4 colonnes en largeur, 3 rangées en hauteur — on prend le plus petit
+  const cellSize = Math.min(availW / 4, availH / 3);
+  const frameW = cellSize * 4;
+  const frameH = cellSize * 3;
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
-      <View style={[s.container, { paddingTop: insets.top }]}>
+      <View style={[s.container, step !== 'camera' && { paddingTop: insets.top }]}>
 
-        {/* Header */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={s.closeBtn}>✕</Text>
-          </TouchableOpacity>
-          <Text style={s.headerTitle}>Scan de {playerName}</Text>
-          <View style={{ width: 32 }} />
-        </View>
+        {/* Header — masqué en mode caméra */}
+        {step !== 'camera' && (
+          <View style={s.header}>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={s.closeBtn}>✕</Text>
+            </TouchableOpacity>
+            <Text style={s.headerTitle}>Scan de {playerName}</Text>
+            <View style={{ width: 32 }} />
+          </View>
+        )}
 
         {/* ── Étape 1 : Instructions ── */}
         {step === 'instruction' && (
@@ -259,42 +274,42 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
           </View>
         )}
 
-        {/* ── Étape 2 : Caméra ── */}
+        {/* ── Étape 2 : Caméra (plein écran, paysage) ── */}
         {step === 'camera' && permission?.granted && (
           <View style={s.cameraContainer}>
             <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
 
-            {/* Cadre de visée quasi plein écran paysage */}
-            <View style={s.cameraOverlay}>
-              <View style={s.cameraFrame}>
-                {/* Coins de visée */}
+            {/* Cadre de visée : cellules carrées calculées dynamiquement */}
+            <View style={[s.cameraOverlay, { paddingLeft: insets.left, paddingRight: shutterAreaW + insets.right }]}>
+              <View style={[s.cameraFrame, { width: frameW, height: frameH }]}>
+                {/* Coins */}
                 <View style={[s.corner, s.cornerTL]} />
                 <View style={[s.corner, s.cornerTR]} />
                 <View style={[s.corner, s.cornerBL]} />
                 <View style={[s.corner, s.cornerBR]} />
 
-                {/* Ligne de séparation sanctuaires / régions (1/3 depuis le haut) */}
-                <View style={s.dividerH} />
-                {/* Ligne de séparation rangée 1 / rangée 2 régions (2/3) */}
-                <View style={[s.dividerH, { top: '66.6%' }]} />
-                {/* Séparateurs verticaux (entre les 4 colonnes) */}
-                {[25, 50, 75].map((pct) => (
-                  <View key={pct} style={[s.dividerV, { left: `${pct}%` }]} />
+                {/* Séparateur horizontal sanctuaires / régions */}
+                <View style={[s.dividerH, { top: cellSize }]} />
+                {/* Séparateur horizontal entre les 2 rangées de régions */}
+                <View style={[s.dividerH, { top: cellSize * 2 }]} />
+                {/* Séparateurs verticaux — uniquement dans la zone régions (2/3 bas) */}
+                {[1, 2, 3].map((col) => (
+                  <View key={col} style={[s.dividerV, { left: cellSize * col, top: cellSize }]} />
                 ))}
 
-                {/* Labels des zones */}
-                <Text style={[s.zoneLabel, { top: '5%', left: '2%' }]}>Sanctuaires</Text>
-                <Text style={[s.zoneLabel, { top: '38%', left: '2%' }]}>Régions 1–4</Text>
-                <Text style={[s.zoneLabel, { top: '72%', left: '2%' }]}>Régions 5–8</Text>
+                {/* Labels */}
+                <Text style={[s.zoneLabel, { top: 4, left: 6 }]}>Sanctuaires</Text>
+                <Text style={[s.zoneLabel, { top: frameH / 3 + 4, left: 6 }]}>Régions 1–4</Text>
+                <Text style={[s.zoneLabel, { top: (frameH * 2) / 3 + 4, left: 6 }]}>Régions 5–8</Text>
               </View>
             </View>
 
-            {/* Bouton déclencheur à droite en paysage */}
-            <View style={[s.cameraControls, { paddingRight: insets.right + SPACING.md }]}>
+            {/* Déclencheur — colonne droite */}
+            <View style={[s.cameraControls, { right: insets.right, width: shutterAreaW }]}>
               <TouchableOpacity style={s.shutterBtn} onPress={takePhoto}>
                 <View style={s.shutterInner} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => exitCamera('instruction')}>
+              <TouchableOpacity onPress={() => exitCamera('instruction')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Text style={s.cancelWhite}>Annuler</Text>
               </TouchableOpacity>
             </View>
@@ -437,57 +452,55 @@ const s = StyleSheet.create({
   cameraOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.sm,
+    alignItems: 'flex-start',
   },
   cameraFrame: {
-    width: '88%',
-    height: '88%',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 8,
+    borderColor: 'rgba(255,255,255,0.85)',
+    borderRadius: 6,
     overflow: 'hidden',
   },
   // Coins de visée
   corner: {
-    position: 'absolute', width: 20, height: 20,
+    position: 'absolute', width: 18, height: 18,
     borderColor: COLORS.white, borderWidth: 3,
   },
-  cornerTL: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 6 },
-  cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 6 },
-  cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 6 },
-  cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 6 },
+  cornerTL: { top: -1, left: -1, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 6 },
+  cornerTR: { top: -1, right: -1, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 6 },
+  cornerBL: { bottom: -1, left: -1, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 6 },
+  cornerBR: { bottom: -1, right: -1, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 6 },
   // Grille indicative
   dividerH: {
-    position: 'absolute', top: '33.3%', left: 0, right: 0,
-    height: 1, backgroundColor: 'rgba(255,255,255,0.3)',
+    position: 'absolute', left: 0, right: 0,
+    height: 1, backgroundColor: 'rgba(255,255,255,0.35)',
   },
   dividerV: {
-    position: 'absolute', top: '33.3%', bottom: 0,
+    position: 'absolute', bottom: 0,
     width: 1, backgroundColor: 'rgba(255,255,255,0.25)',
   },
   zoneLabel: {
     position: 'absolute',
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 10,
-    fontWeight: '600',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 9,
+    fontWeight: '700',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3,
+    letterSpacing: 0.3,
   },
-  // Bouton déclencheur (côté droit en paysage)
+  // Bouton déclencheur — colonne droite fixe
   cameraControls: {
-    position: 'absolute', top: 0, bottom: 0, right: 0,
+    position: 'absolute', top: 0, bottom: 0,
     justifyContent: 'center', alignItems: 'center',
-    gap: SPACING.md, paddingHorizontal: SPACING.sm,
+    gap: SPACING.md,
   },
   shutterBtn: {
-    width: 64, height: 64, borderRadius: 32,
+    width: 56, height: 56, borderRadius: 28,
     backgroundColor: 'rgba(255,255,255,0.25)',
     borderWidth: 3, borderColor: COLORS.white,
     alignItems: 'center', justifyContent: 'center',
   },
-  shutterInner: { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.white },
-  cancelWhite: { color: COLORS.white, fontSize: FONTS.small, fontWeight: '500' },
+  shutterInner: { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.white },
+  cancelWhite: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '500' },
 
   // Traitement
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.lg, padding: SPACING.md },

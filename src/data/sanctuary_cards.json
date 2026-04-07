@@ -1,8 +1,661 @@
 {
   "1": {
-    "biome": "",
-    "resources": { "stones": 0, "chimeras": 0, "thistles": 0 },
-    "clues": 0,
+    "biome": null,
+    "bonus": {
+      "clues": 1,
+      "resources": {
+        "stones": 0,
+        "chimeras": 1,
+        "thistles": 0
+      }
+    },
+    "quests": [
+      {
+        "condition": null,
+        "reward": {
+          "type": "fixed",
+          "points": 4
+        }
+      }
+    ]
+  },
+  "2": {
+    "biome": "vert",
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 2,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": [
+      {
+        "condition": {
+          "stones": 3,
+          "chimeras": 1,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 3,
+          "biomes": [
+            "vert"
+          ]
+        }
+      }
+    ]
+  },
+  "3": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "4": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "5": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "6": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "7": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "8": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "9": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "10": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "11": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "12": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "13": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "14": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "15": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "16": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "17": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "18": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "19": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "20": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "21": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "22": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "23": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "24": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "25": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "26": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "27": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "28": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "29": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "30": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "31": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "32": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "33": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "34": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "35": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "36": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "37": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "38": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "39": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "40": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "41": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "42": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "43": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "44": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "45": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "46": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "47": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "48": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "49": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "50": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "51": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "52": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
+    "quests": []
+  },
+  "53": {
+    "biome": null,
+    "bonus": {
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 0
+      }
+    },
     "quests": []
   }
 }
