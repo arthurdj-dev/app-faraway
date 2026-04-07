@@ -8,19 +8,23 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScanModal from '../components/ScanModal';
+import Results from './Results';
 import { COLORS, SPACING, FONTS } from '../constants/theme';
 
 let nextId = 3;
 const makePlayer = (id, name = '') => ({ id, name, scanned: false, cards: null });
+const resetNextId = () => { nextId = 3; };
 
 export default function NewGame() {
   const insets = useSafeAreaInsets();
   const [players, setPlayers] = useState([makePlayer(1), makePlayer(2)]);
   const [scanningPlayer, setScanningPlayer] = useState(null);
+  const [showResults, setShowResults] = useState(false);
 
   const allScanned = players.length >= 1 && players.every((p) => p.scanned);
 
@@ -47,8 +51,12 @@ export default function NewGame() {
     setScanningPlayer(null);
   };
 
-  const handleResults = () => {
-    // TODO: naviguer vers l'écran de résultats
+  const handleResults = () => setShowResults(true);
+
+  const handleNewGame = () => {
+    setShowResults(false);
+    resetNextId();
+    setPlayers([makePlayer(1), makePlayer(2)]);
   };
 
   return (
@@ -121,6 +129,17 @@ export default function NewGame() {
         onClose={() => setScanningPlayer(null)}
         onComplete={handleScanComplete}
       />
+
+      <Modal visible={showResults} animationType="slide" statusBarTranslucent>
+        <Results
+          players={players.map((p, i) => ({
+            name: p.name || `Joueur ${i + 1}`,
+            regions:    p.cards?.regions    ?? [],
+            sanctuaries: p.cards?.sanctuaries ?? [],
+          }))}
+          onNewGame={handleNewGame}
+        />
+      </Modal>
     </KeyboardAvoidingView>
   );
 }

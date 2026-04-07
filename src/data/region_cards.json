@@ -882,7 +882,7 @@
   "41": {
     "biome": "vert",
     "duration": 41,
-    "timeOfDay": "jour",
+    "timeOfDay": "day",
     "clues": 0,
     "resources": {
       "stones": 0,
@@ -1716,7 +1716,7 @@
   "76": {
     "biome": "",
     "duration": 76,
-    "timeOfDay": "nuit",
+    "timeOfDay": "night",
     "clues": 0,
     "resources": {
       "stones": 0,
