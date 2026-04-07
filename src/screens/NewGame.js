@@ -13,6 +13,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScanModal from '../components/ScanModal';
+import GroqKeyModal from '../components/GroqKeyModal';
 import Results from './Results';
 import { COLORS, SPACING, FONTS } from '../constants/theme';
 
@@ -25,6 +26,7 @@ export default function NewGame() {
   const [players, setPlayers] = useState([makePlayer(1), makePlayer(2)]);
   const [scanningPlayer, setScanningPlayer] = useState(null);
   const [showResults, setShowResults] = useState(false);
+  const [showGroqKey, setShowGroqKey] = useState(false);
 
   const allScanned = players.length >= 1 && players.every((p) => p.scanned);
 
@@ -64,7 +66,16 @@ export default function NewGame() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Text style={styles.title}>Nouvelle partie</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Nouvelle partie</Text>
+        <TouchableOpacity
+          onPress={() => setShowGroqKey(true)}
+          style={styles.keyBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="key-outline" size={22} color={COLORS.textLight} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         style={styles.list}
@@ -130,6 +141,8 @@ export default function NewGame() {
         onComplete={handleScanComplete}
       />
 
+      <GroqKeyModal visible={showGroqKey} onClose={() => setShowGroqKey(false)} />
+
       <Modal visible={showResults} animationType="slide" statusBarTranslucent>
         <Results
           players={players.map((p, i) => ({
@@ -146,14 +159,20 @@ export default function NewGame() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  title: {
-    fontSize: FONTS.title,
-    fontWeight: '700',
-    color: COLORS.text,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
   },
+  title: {
+    fontSize: FONTS.title,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  keyBtn: { padding: SPACING.xs },
   list: { flex: 1 },
   listContent: { paddingHorizontal: SPACING.md, paddingBottom: SPACING.md, gap: SPACING.sm },
   playerRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },

@@ -23,6 +23,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { scanTableau } from '../utils/tableauScanner';
+import { getGroqApiKey } from '../utils/storage';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 
 const REGION_COUNT = 8;
@@ -156,6 +157,20 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const handleClose = () => { reset(); onClose(); };
 
   const openCamera = async () => {
+    const groqKey = await getGroqApiKey();
+    if (!groqKey) {
+      Alert.alert(
+        'Clé Groq manquante',
+        'Pour scanner tes cartes, tu as besoin d\'une clé API Groq gratuite.\n\n' +
+        '1. Va sur console.groq.com\n' +
+        '2. Crée un compte gratuit\n' +
+        '3. Clique sur "API Keys" → "Create API Key"\n' +
+        '4. Appuie sur 🔑 en haut de l\'écran pour entrer ta clé\n\n' +
+        'C\'est 100% gratuit, sans carte bancaire.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     if (!permission?.granted) {
       const r = await requestPermission();
       if (!r.granted) {
@@ -206,7 +221,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   // Dimensions du cadre caméra en paysage : cellules carrées
   // On contraint cellSize pour que le cadre tienne dans les deux axes.
   const shutterAreaW = 80;
-  const PADDING = 24; // marge autour du cadre
+  const PADDING = 8; // marge autour du cadre
   const availW = winW - shutterAreaW - insets.left - insets.right - PADDING * 2;
   const availH = winH - insets.top - insets.bottom - PADDING * 2;
   // 4 colonnes en largeur, 3 rangées en hauteur — on prend le plus petit
@@ -280,7 +295,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
             <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
 
             {/* Cadre de visée : cellules carrées calculées dynamiquement */}
-            <View style={[s.cameraOverlay, { paddingLeft: insets.left, paddingRight: shutterAreaW + insets.right }]}>
+            <View style={s.cameraOverlay}>
               <View style={[s.cameraFrame, { width: frameW, height: frameH }]}>
                 {/* Coins */}
                 <View style={[s.corner, s.cornerTL]} />
@@ -452,7 +467,7 @@ const s = StyleSheet.create({
   cameraOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   cameraFrame: {
     borderWidth: 2,

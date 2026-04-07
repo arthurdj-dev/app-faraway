@@ -15,7 +15,7 @@
  *  1. cardWidth  = imageWidth / 4   (4 cartes Région par ligne)
  *  2. zoneHeight = imageHeight / 3  (3 bandes horizontales égales)
  *  3. Régions  → OCR sur chaque bande, reconnaît le numéro
- *  4. Sanctuaires → pHash sur chaque bande de la zone haute
+ *  4. Sanctuaires → pHash sur les bandes restantes
  *     Le nombre de sanctuaires est détecté automatiquement :
  *     on essaie jusqu'à MAX_SANCTUARIES et on garde ceux dont
  *     la distance pHash est sous le seuil LOW_CONFIDENCE.
@@ -65,8 +65,6 @@ async function ocrNumber(stripUri) {
   }
 
   if (candidates.length === 0) return null;
-  // En cas de plusieurs lectures, on prend la plus haute (les numéros de région
-  // sont souvent plus grands que les chiffres de score ou indices)
   return candidates.sort((a, b) => b - a)[0];
 }
 
@@ -100,20 +98,6 @@ async function recognizeSanctuary(stripUri) {
 
 // ─── Fonction principale ───────────────────────────────────────────────────
 
-/**
- * @param {string}  photoUri
- * @param {{ width: number, height: number }} dimensions
- * @returns {Promise<Array<{
- *   index:      number,
- *   type:       'region' | 'sanctuary',
- *   id:         number | null,
- *   confidence: 'high' | 'low' | 'none',
- *   candidates?: Array<{ id: number, distance: number }>,
- *   stripUri:   string,
- *   row?:       number,   // 0 ou 1 pour les régions
- *   col?:       number,   // 0-3 pour les régions
- * }>>}
- */
 export async function scanTableau(photoUri, dimensions) {
   const { width: imgW, height: imgH } = dimensions;
 
@@ -123,9 +107,8 @@ export async function scanTableau(photoUri, dimensions) {
   const results = [];
 
   // ── Régions ──────────────────────────────────────────────────────────────
-  // 2 rangées de 4, zone milieu (1/3) et zone bas (2/3 → fin)
   for (let row = 0; row < 2; row++) {
-    const originY = (row + 1) * zoneH; // zone 1 = milieu, zone 2 = bas
+    const originY = (row + 1) * zoneH;
 
     for (let col = 0; col < CARDS_PER_ROW; col++) {
       const cardIndex = row * CARDS_PER_ROW + col;
@@ -147,18 +130,14 @@ export async function scanTableau(photoUri, dimensions) {
   }
 
   // ── Sanctuaires ──────────────────────────────────────────────────────────
-  // Zone haute (première 1/3), autant de bandes que possible
-  // On s'arrête quand la confiance tombe sous le seuil
   for (let s = 0; s < MAX_SANCTUARIES; s++) {
     const originX = s * cardW;
 
-    // On ne dépasse pas la largeur de l'image
     if (originX + cardW / 2 > imgW) break;
 
     const stripUri    = await cropZone(photoUri, originX, 0, cardW, zoneH, imgW, imgH);
     const recognition = await recognizeSanctuary(stripUri);
 
-    // Si la confiance est nulle, on suppose qu'il n'y a plus de sanctuaires
     if (recognition.confidence === 'none') break;
 
     results.push({
