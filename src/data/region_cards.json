@@ -154,7 +154,7 @@
   "10": {
     "biome": "rouge",
     "duration": 10,
-    "timeOfDay": "jour",
+    "timeOfDay": "day",
     "clues": 0,
     "resources": {
       "stones": 0,
@@ -640,7 +640,7 @@
         "reward": {
           "type": "per_resource",
           "points": 2,
-          "resource": "stone"
+          "resource": "stones"
         }
       }
 ]
@@ -860,7 +860,7 @@
   "40": {
     "biome": "bleu",
     "duration": 40,
-    "timeOfDay": "nuit",
+    "timeOfDay": "night",
     "clues": 0,
     "resources": {
       "stones": 0,

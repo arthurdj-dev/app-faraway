@@ -13,7 +13,8 @@
       "WebFetch(domain:en.doc.boardgamearena.com)",
       "WebFetch(domain:www.ludum.fr)",
       "Bash(npm install:*)",
-      "Bash(node /c/Users/arthu/Projets/app-faraway/scripts/generateCardTemplates.js)"
+      "Bash(node /c/Users/arthu/Projets/app-faraway/scripts/generateCardTemplates.js)",
+      "Bash(node -e ':*)"
     ],
     "additionalDirectories": [
       "C:\\Users\\arthu\\Projets\\app-faraway\\src"

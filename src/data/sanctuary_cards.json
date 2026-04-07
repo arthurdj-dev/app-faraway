@@ -1,55 +1,35 @@
 {
   "1": {
+    "biome": "rouge",
+    "bonus": {
+      "night": 0,
+      "clues": 0,
+      "resources": {
+        "stones": 0,
+        "chimeras": 0,
+        "thistles": 1
+      }
+    },
+    "quests": []
+  },
+  "2": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 1,
       "resources": {
         "stones": 0,
-        "chimeras": 1,
-        "thistles": 0
-      }
-    },
-    "quests": [
-      {
-        "condition": null,
-        "reward": {
-          "type": "fixed",
-          "points": 4
-        }
-      }
-    ]
-  },
-  "2": {
-    "biome": "vert",
-    "bonus": {
-      "clues": 0,
-      "resources": {
-        "stones": 2,
         "chimeras": 0,
-        "thistles": 0
+        "thistles": 1
       }
     },
-    "quests": [
-      {
-        "condition": {
-          "stones": 3,
-          "chimeras": 1,
-          "thistles": 0
-        },
-        "reward": {
-          "type": "per_biome",
-          "points": 3,
-          "biomes": [
-            "vert"
-          ]
-        }
-      }
-    ]
+    "quests": []
   },
   "3": {
-    "biome": null,
+    "biome": "jaune",
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
         "chimeras": 0,
@@ -61,18 +41,36 @@
   "4": {
     "biome": null,
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
         "chimeras": 0,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource_group",
+          "points": 3,
+          "resources": {
+            "stones": 1,
+            "chimeras": 1,
+            "thistles": 1
+          }
+        }
+      }
+    ]
   },
   "5": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -80,23 +78,46 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "stones"
+        }
+      }]
   },
   "6": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 1
+        }
+      }]
   },
   "7": {
-    "biome": null,
+    "biome": "rouge",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -104,39 +125,79 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "rouge"
+          ]
+        }
+      }
+    ]
   },
   "8": {
     "biome": null,
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
         "chimeras": 0,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 1
+        }
+      }
+    ]
   },
   "9": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
         "chimeras": 0,
-        "thistles": 0
+        "thistles": 1
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 1,
+          "resource": "thistles"
+        }
+      }
+]
   },
   "10": {
-    "biome": null,
+    "biome": "verte",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
@@ -145,6 +206,7 @@
   "11": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -152,11 +214,28 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [
+            {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "rouge",
+            "vert"
+          ]
+        }
+      }
+    ]
   },
   "12": {
-    "biome": null,
+    "biome": "jaune",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -164,11 +243,29 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome_group",
+          "points": 4,
+          "biomes": [
+            "jaune",
+            "rouge",
+            "vert",
+            "bleu"
+          ]
+        }
+      }
+    ]
   },
   "13": {
-    "biome": null,
+    "biome": "jaune",
     "bonus": {
+      "night": 1,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -176,14 +273,28 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            ""
+          ]
+        }
+      }]
   },
   "14": {
     "biome": null,
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
@@ -193,6 +304,7 @@
   "15": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -200,11 +312,25 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "chimeras"
+        }
+      }
+
+    ]
   },
   "16": {
-    "biome": null,
+    "biome": "bleu",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -212,14 +338,29 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "bleu"
+          ]
+        }
+      }
+    ]
   },
   "17": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 2,
         "chimeras": 0,
         "thistles": 0
       }
@@ -227,11 +368,12 @@
     "quests": []
   },
   "18": {
-    "biome": null,
+    "biome": "vert",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
@@ -239,8 +381,9 @@
     "quests": []
   },
   "19": {
-    "biome": null,
+    "biome": "vert",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -248,12 +391,26 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "vert"
+          ]
+        }
+      }]
   },
   "20": {
-    "biome": null,
+    "biome": "bleu",
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
         "chimeras": 0,
@@ -263,8 +420,9 @@
     "quests": []
   },
   "21": {
-    "biome": null,
+    "biome": "rouge",
     "bonus": {
+      "night": 1,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -275,8 +433,9 @@
     "quests": []
   },
   "22": {
-    "biome": null,
+    "biome": "vert",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -284,11 +443,23 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_night",
+          "points": 1
+        }
+      }
+]
   },
   "23": {
-    "biome": null,
+    "biome": "bleu",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -296,14 +467,29 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 2,
+          "biomes": [
+            ""
+          ]
+        }
+      }
+]
   },
   "24": {
-    "biome": null,
+    "biome": "rouge",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
@@ -313,18 +499,36 @@
   "25": {
     "biome": null,
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
         "chimeras": 0,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome_group",
+          "points": 4,
+          "biomes": [
+            "jaune",
+            "rouge",
+            "vert",
+            "bleu"
+          ]
+        }
+      }]
   },
   "26": {
-    "biome": null,
+    "biome": "jaune",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -332,11 +536,25 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "jaune"
+          ]
+        }
+      }]
   },
   "27": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -344,14 +562,29 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "vert",
+            "jaune"
+          ]
+        }
+      }]
   },
   "28": {
-    "biome": null,
+    "biome": "jaune",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
@@ -359,8 +592,9 @@
     "quests": []
   },
   "29": {
-    "biome": null,
+    "biome": "jaune",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -368,11 +602,23 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 1
+        }
+      }
+    ]
   },
   "30": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -380,11 +626,23 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 2,
+          "resource": "thistles"
+        }
+      }]
   },
   "31": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -392,11 +650,24 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [
+      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 2
+        }
+      }
+]
   },
   "32": {
-    "biome": null,
+    "biome": "rouge",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -404,24 +675,53 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource_group",
+          "points": 3,
+          "resources": {
+            "stones": 1,
+            "chimeras": 1,
+            "thistles": 1
+          }
+        }
+      }
+]
   },
   "33": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 1,
+          "resource": "stones"
+        }
+      }]
   },
   "34": {
-    "biome": null,
+    "biome": "vert",
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
         "chimeras": 0,
@@ -431,12 +731,13 @@
     "quests": []
   },
   "35": {
-    "biome": null,
+    "biome": "bleu",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
@@ -445,6 +746,7 @@
   "36": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -452,11 +754,27 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "rouge",
+            "bleu"
+          ]
+        }
+      }
+    ]
   },
   "37": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -464,11 +782,27 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "bleu",
+            "jaune"
+          ]
+        }
+      }
+    ]
   },
   "38": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -476,11 +810,27 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "rouge",
+            "jaune"
+          ]
+        }
+      }
+    ]
   },
   "39": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -488,28 +838,41 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "fixed",
+          "points": 5
+        }
+      }
+]
   },
   "40": {
     "biome": null,
     "bonus": {
+      "night": 1,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
     "quests": []
   },
   "41": {
-    "biome": null,
+    "biome": "bleu",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
         "chimeras": 0,
-        "thistles": 0
+        "thistles": 1
       }
     },
     "quests": []
@@ -517,9 +880,10 @@
   "42": {
     "biome": null,
     "bonus": {
+      "night": 1,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
@@ -527,8 +891,9 @@
     "quests": []
   },
   "43": {
-    "biome": null,
+    "biome": "vert",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -536,23 +901,53 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource_group",
+          "points": 3,
+          "resources": {
+            "stones": 1,
+            "chimeras": 1,
+            "thistles": 1
+          }
+        }
+      }
+    ]
   },
   "44": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_resource",
+          "points": 1,
+          "resource": "chimeras"
+        }
+      }
+    ]
   },
   "45": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
@@ -560,39 +955,83 @@
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            "vert",
+            "bleu"
+          ]
+        }
+      }
+    ]
   },
   "46": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
         "chimeras": 0,
-        "thistles": 0
+        "thistles": 1
       }
     },
-    "quests": []
+    "quests": [      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            ""
+          ]
+        }
+      }
+    ]
   },
   "47": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [
+      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 1
+        }
+      }
+    ]
   },
   "48": {
-    "biome": null,
+    "biome": "rouge",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
@@ -601,22 +1040,36 @@
   "49": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [
+      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_clue",
+          "points": 1
+        }
+      }
+    ]
   },
   "50": {
     "biome": null,
     "bonus": {
-      "clues": 0,
+      "night": 0,
+      "clues": 1,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
@@ -625,33 +1078,51 @@
   "51": {
     "biome": null,
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
         "stones": 0,
-        "chimeras": 0,
+        "chimeras": 1,
         "thistles": 0
       }
     },
-    "quests": []
+    "quests": [
+      {
+        "condition": {
+          "stones": 0,
+          "chimeras": 0,
+          "thistles": 0
+        },
+        "reward": {
+          "type": "per_biome",
+          "points": 1,
+          "biomes": [
+            ""
+          ]
+        }
+      }
+    ]
   },
   "52": {
     "biome": null,
     "bonus": {
+      "night": 1,
       "clues": 0,
       "resources": {
         "stones": 0,
         "chimeras": 0,
-        "thistles": 0
+        "thistles": 1
       }
     },
     "quests": []
   },
   "53": {
-    "biome": null,
+    "biome": "bleu",
     "bonus": {
+      "night": 0,
       "clues": 0,
       "resources": {
-        "stones": 0,
+        "stones": 1,
         "chimeras": 0,
         "thistles": 0
       }
