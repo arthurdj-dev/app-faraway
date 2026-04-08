@@ -22,6 +22,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { scanTableau } from '../utils/tableauScanner';
 import { getGroqApiKey, getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
@@ -189,7 +190,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
         return;
       }
     }
-    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
     setStep('camera');
   };
 
@@ -202,9 +203,22 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.92 });
-      setPhotoUri(photo.uri);
+
+      // En LANDSCAPE_LEFT, le capteur Android reste en portrait natif.
+      // On force toujours la rotation -90° pour obtenir le bon sens paysage.
+      let finalUri = photo.uri;
+      if (photo.height > photo.width) {
+        const rotated = await ImageManipulator.manipulateAsync(
+          photo.uri,
+          [{ rotate: -90 }],
+          { format: ImageManipulator.SaveFormat.JPEG, compress: 0.92 }
+        );
+        finalUri = rotated.uri;
+      }
+
+      setPhotoUri(finalUri);
       await exitCamera('processing');
-      const res = await scanTableau(photo.uri);
+      const res = await scanTableau(finalUri);
       setResults(res);
       setStep('results');
     } catch (e) {
@@ -229,13 +243,10 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
 
   const allIdentified = results.length > 0 && results.every((r) => r.id !== null);
 
-  // Dimensions du cadre caméra en paysage : cellules carrées
-  // On contraint cellSize pour que le cadre tienne dans les deux axes.
   const shutterAreaW = 80;
-  const PADDING = 8; // marge autour du cadre
+  const PADDING = 8;
   const availW = winW - shutterAreaW - insets.left - insets.right - PADDING * 2;
   const availH = winH - insets.top - insets.bottom - PADDING * 2;
-  // 4 colonnes en largeur, 3 rangées en hauteur — on prend le plus petit
   const cellSize = Math.min(availW / 4, availH / 3);
   const frameW = cellSize * 4;
   const frameH = cellSize * 3;
@@ -313,7 +324,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
         {/* ── Étape 2 : Caméra (plein écran, paysage) ── */}
         {step === 'camera' && permission?.granted && (
           <View style={s.cameraContainer}>
-            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} />
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} ratio="4:3" />
 
             {/* Cadre de visée : cellules carrées calculées dynamiquement */}
             <View style={s.cameraOverlay}>
