@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { scanTableau } from '../utils/tableauScanner';
-import { getGeminiApiKey, getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
+import { getGroqApiKey, getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 
 const REGION_COUNT = 8;
@@ -169,14 +169,14 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   }, [visible]);
 
   const openCamera = async () => {
-    const geminiKey = await getGeminiApiKey();
-    if (!geminiKey) {
+    const groqKey = await getGroqApiKey();
+    if (!groqKey) {
       Alert.alert(
-        'Clé Gemini manquante',
-        'Pour scanner tes cartes, tu as besoin d\'une clé API Gemini gratuite.\n\n' +
-        '1. Va sur aistudio.google.com\n' +
-        '2. Connecte-toi avec ton compte Google\n' +
-        '3. Clique sur "Get API key" → "Create API key"\n' +
+        'Clé Groq manquante',
+        'Pour scanner tes cartes, tu as besoin d\'une clé API Groq gratuite.\n\n' +
+        '1. Va sur console.groq.com\n' +
+        '2. Crée un compte gratuit (Google ou email)\n' +
+        '3. Clique sur "API Keys" → "Create API Key"\n' +
         '4. Appuie sur 🔑 en haut de l\'écran pour entrer ta clé\n\n' +
         'C\'est 100% gratuit, sans carte bancaire.',
         [{ text: 'OK' }]

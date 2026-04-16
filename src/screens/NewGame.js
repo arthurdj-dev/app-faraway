@@ -13,7 +13,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScanModal from '../components/ScanModal';
-import GeminiKeyModal from '../components/GeminiKeyModal';
+import GroqKeyModal from '../components/GroqKeyModal';
 import Results from './Results';
 import { COLORS, SPACING, FONTS } from '../constants/theme';
 
@@ -26,7 +26,7 @@ export default function NewGame() {
   const [players, setPlayers] = useState([makePlayer(1), makePlayer(2)]);
   const [scanningPlayer, setScanningPlayer] = useState(null);
   const [showResults, setShowResults] = useState(false);
-  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showGroqKey, setShowGroqKey] = useState(false);
 
   const allScanned = players.length >= 1 && players.every((p) => p.scanned);
 
@@ -69,7 +69,7 @@ export default function NewGame() {
       <View style={styles.titleRow}>
         <Text style={styles.title}>Nouvelle partie</Text>
         <TouchableOpacity
-          onPress={() => setShowGeminiKey(true)}
+          onPress={() => setShowGroqKey(true)}
           style={styles.keyBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -141,7 +141,7 @@ export default function NewGame() {
         onComplete={handleScanComplete}
       />
 
-      <GeminiKeyModal visible={showGeminiKey} onClose={() => setShowGeminiKey(false)} />
+      <GroqKeyModal visible={showGroqKey} onClose={() => setShowGroqKey(false)} />
 
       <Modal visible={showResults} animationType="slide" statusBarTranslucent>
         <Results

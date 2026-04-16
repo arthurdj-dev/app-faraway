@@ -44,13 +44,13 @@ src/
 - **2 à 6 joueurs**, 8 manches
 - Chaque joueur explore le continent Alula en posant 8 cartes Région de gauche à droite
 - But : accumuler des ressources et accomplir des quêtes pour gagner de la **renommée** (points de victoire)
-- Composants : 68 cartes Région, 45 cartes Sanctuaire, 1 bloc de score
+- Composants : 77 cartes Région (numérotées 0 à 76), 53 cartes Sanctuaire (numérotées 1 à 53), 1 bloc de score
 
 ### Cartes Région
 
 Chaque carte contient :
 - **Biome** : identifié par une couleur et une frise (4 biomes au total — exact à cataloguer)
-- **Durée d'exploration** : nombre unique de 1 à 68 (ordre chronologique)
+- **Durée d'exploration** : nombre unique de 0 à 76 (ordre chronologique)
 - **Heure** : jour ou nuit (impacte certaines quêtes)
 - **Indices** : symboles qui augmentent le nombre de Sanctuaires piochés
 - **Ressources** (« Merveilles ») : 0 à plusieurs symboles parmi les 3 types
@@ -108,24 +108,30 @@ Règle spéciale : certains Sanctuaires sont liés à une couleur de biome et **
 
 ---
 
-## Ce qui reste à définir pour le code
+## Architecture de reconnaissance (implémentée)
 
-- [ ] Catalogue complet des quêtes (types, conditions, valeurs de renommée) → à extraire des vraies cartes
-- [ ] Les 4 biomes exacts et leurs couleurs
-- [ ] **Méthode de reconnaissance retenue** : approche hybride, 100% offline, sans clé API
-  - **Cartes Région** (numéro unique 1-68 + extension) : OCR via `@react-native-ml-kit/text-recognition`
-    - Flow : capture → ML Kit lit le numéro → lookup `region_cards.json` → numpad de correction si ambiguïté
-    - Nécessite un dev client Expo (pas Expo Go)
-  - **Cartes Sanctuaire** (45 cartes, pas de numéro) : **perceptual hashing (pHash)**
-    - Principe : chaque carte a une "empreinte visuelle" unique calculée depuis une photo de référence
-    - Flow : capture → pHash → distance de Hamming avec les 45 références → carte la plus proche → confirmation "Ce n'est pas cette carte ?"
-    - Prétraitement via `expo-image-manipulator` (resize 64×64, niveaux de gris) — pas de lib native
-    - Algo pHash implémenté en JS pur (basé sur DCT), rapide sur 45 cartes
-    - **Session de référence** : photographier les 45 sanctuaires (2-3 angles/lumières) → script de build génère `sanctuary_hashes.json`
-    - Fallback : si confiance faible, afficher les 3 meilleures propositions à choisir manuellement
-  - **Base de données locale** :
-    - `region_cards.json` : `{ id, biome, duration, timeOfDay, clues, resources: { stones, chimeras, thistles }, quests: [{ fame, condition? }] }`
-    - `sanctuary_cards.json` : `{ id, biome, resources: { stones, chimeras, thistles }, clues, quests: [{ fame, condition? }] }`
-    - `sanctuary_hashes.json` : `{ id, hashes: [hash1, hash2, ...] }` (plusieurs angles par carte)
-- [ ] Structure de la fiche de scores (écran Résultats)
+- **Un seul scan** du tableau complet suffit (pas de scan individuel)
+- **Modèle** : Groq API, Llama 4 Scout (`meta-llama/llama-4-scout-17b-16e-instruct`)
+- **Clé API** : saisie par l'utilisateur dans l'app, stockée via AsyncStorage
+
+### Flow (`src/utils/tableauScanner.js`)
+
+1. Resize photo → 1920px JPEG base64
+2. **Appel 1** : Groq lit les 8 numéros de cartes Région (0–76) → lookup `region_cards.json`
+3. Calcul local du nombre de sanctuaires (comparaison des durées d'exploration)
+4. **Appel 2** : Groq décrit les N sanctuaires avec ancres visuelles des régions identifiées
+5. Matching local : `matchSanctuary()` filtre par biome + quest_points puis score par ressources
+
+### Base de données locale
+
+- `region_cards.json` : 77 cartes (id 0–76), `{ biome, duration, timeOfDay, clues, resources: { stones, chimeras, thistles }, quests }`
+- `sanctuary_cards.json` : 53 cartes (id 1–53), `{ biome, bonus: { night, clues, resources }, quests }`
+
+### Biomes
+
+4 biomes : `vert`, `jaune`, `rouge`, `bleu` — plus `null` pour les cartes sans biome (fond gris/noir)
+
+## Ce qui reste à faire
+
 - [ ] Persistance des parties pour l'historique
+- [ ] Écran Historique et Statistiques
