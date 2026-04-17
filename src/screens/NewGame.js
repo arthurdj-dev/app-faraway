@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScanModal from '../components/ScanModal';
 import GroqKeyModal from '../components/GroqKeyModal';
 import Results from './Results';
+import { calculateAllScores } from '../utils/scoring';
+import { saveGame } from '../utils/storage';
 import { COLORS, SPACING, FONTS } from '../constants/theme';
 
 let nextId = 3;
@@ -55,7 +57,23 @@ export default function NewGame() {
 
   const handleResults = () => setShowResults(true);
 
-  const handleNewGame = () => {
+  const handleNewGame = async () => {
+    const playersData = players.map((p, i) => ({
+      name: p.name || `Joueur ${i + 1}`,
+      regions: p.cards?.regions ?? [],
+      sanctuaries: p.cards?.sanctuaries ?? [],
+    }));
+    const scored = calculateAllScores(playersData);
+    await saveGame({
+      date: new Date().toISOString(),
+      players: scored.map((s) => ({
+        name: s.name,
+        total: s.total,
+        rank: s.rank,
+        regions: playersData.find((p) => p.name === s.name)?.regions ?? [],
+        sanctuaries: playersData.find((p) => p.name === s.name)?.sanctuaries ?? [],
+      })),
+    });
     setShowResults(false);
     resetNextId();
     setPlayers([makePlayer(1), makePlayer(2)]);

@@ -3,10 +3,10 @@
  *
  * Étape 1 : Instructions de disposition
  * Étape 2 : Prise de photo
- * Étape 3 : Résultats avec correction manuelle optionnelle
+ * Étape 3 : Résultats en grille (sanctuaires + 2 rangées régions) avec picker visuel
  */
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  FlatList,
   ActivityIndicator,
   Image,
   Alert,
@@ -25,114 +26,314 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { scanTableau } from '../utils/tableauScanner';
 import { getGroqApiKey, getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
+import { getSanctuaryImage, SANCTUARY_COUNT } from '../utils/sanctuaryImages';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 
 const REGION_COUNT = 8;
+const REGION_TOTAL = 77; // IDs 0..76
 
-// ─── Numpad inline pour correction ────────────────────────────────────────
+// ─── Cellules visuelles ───────────────────────────────────────────────────
 
-function InlineNumpad({ onConfirm, onCancel }) {
-  const [val, setVal] = useState('');
-  const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
-
-  const press = (k) => {
-    if (k === '⌫') { setVal((v) => v.slice(0, -1)); return; }
-    if (k === '✓') { if (val) onConfirm(parseInt(val)); return; }
-    if (val.length >= 3) return;
-    setVal((v) => v + k);
-  };
-
+function RegionCell({ item, width, height, onPress, selected }) {
+  const hasId = item.id != null;
+  const border = selected
+    ? COLORS.primary
+    : item.confidence === 'none'
+      ? COLORS.primary
+      : item.confidence === 'low'
+        ? COLORS.gold
+        : COLORS.border;
   return (
-    <View style={np.container}>
-      <View style={np.display}>
-        <Text style={np.displayText}>{val || '—'}</Text>
-      </View>
-      <View style={np.grid}>
-        {keys.map((k) => (
-          <TouchableOpacity
-            key={k}
-            style={[np.key, k === '✓' && np.keyOk, k === '✓' && !val && np.keyDisabled]}
-            onPress={() => press(k)}
-            activeOpacity={0.7}
-          >
-            <Text style={[np.keyTxt, k === '✓' && np.keyOkTxt]}>{k}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <TouchableOpacity onPress={onCancel} style={np.cancelBtn}>
-        <Text style={np.cancelTxt}>Annuler</Text>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={[cellStyles.regionBox, {
+        width, height, borderColor: border,
+        borderWidth: selected ? 3 : 2,
+      }]}
+    >
+      <Text style={[cellStyles.regionNum, { fontSize: Math.min(width, height) * 0.34 }]}>
+        {hasId ? `#${item.id}` : '?'}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
-const np = StyleSheet.create({
-  container: { alignItems: 'center', gap: SPACING.sm, padding: SPACING.md },
-  display: {
-    backgroundColor: COLORS.cardBg, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 10, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.xl,
-    minWidth: 120, alignItems: 'center',
+function SanctuaryCell({ item, width, height, onPress, selected }) {
+  const hasId = item.id != null;
+  const img = hasId ? getSanctuaryImage(item.id) : null;
+  const border = selected
+    ? COLORS.primary
+    : item.confidence === 'low'
+      ? COLORS.gold
+      : COLORS.border;
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={[cellStyles.sanctBox, {
+        width, height, borderColor: border,
+        borderWidth: selected ? 3 : 2,
+      }]}
+    >
+      {img ? (
+        <Image source={img} style={cellStyles.sanctImg} resizeMode="cover" />
+      ) : (
+        <View style={cellStyles.sanctPlaceholder}>
+          <Text style={cellStyles.sanctPlaceholderTxt}>?</Text>
+        </View>
+      )}
+      {hasId && (
+        <View style={cellStyles.idTag}>
+          <Text style={cellStyles.idTagTxt}>#{item.id}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+const cellStyles = StyleSheet.create({
+  regionBox: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  displayText: { fontSize: 28, fontWeight: '700', color: COLORS.text, letterSpacing: 4 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', width: 216, gap: SPACING.xs },
-  key: {
-    width: 64, height: 48, backgroundColor: COLORS.cardBg,
-    borderRadius: 8, borderWidth: 1, borderColor: COLORS.border,
-    alignItems: 'center', justifyContent: 'center',
+  regionNum: {
+    fontWeight: '700',
+    color: COLORS.text,
   },
-  keyOk: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  keyDisabled: { backgroundColor: COLORS.disabled, borderColor: COLORS.disabled },
-  keyTxt: { fontSize: FONTS.subtitle, fontWeight: '600', color: COLORS.text },
-  keyOkTxt: { color: COLORS.white },
-  cancelBtn: { paddingVertical: SPACING.sm },
-  cancelTxt: { color: COLORS.textLight, fontSize: FONTS.body },
+  sanctBox: {
+    borderRadius: 6,
+    overflow: 'hidden',
+    backgroundColor: COLORS.cardBg,
+  },
+  sanctImg: { width: '100%', height: '100%' },
+  sanctPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  sanctPlaceholderTxt: { fontSize: 18, color: COLORS.textLight, fontWeight: '700' },
+  idTag: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)', paddingVertical: 1,
+  },
+  idTagTxt: {
+    color: COLORS.white, fontSize: 10, textAlign: 'center', fontWeight: '700',
+  },
 });
 
-// ─── Carte résultat ────────────────────────────────────────────────────────
+// ─── Picker (grille de cartes cliquables pour corriger) ──────────────────
 
-function ResultCard({ item, onEdit }) {
-  const isOk   = item.confidence === 'high';
-  const isLow  = item.confidence === 'low';
-  const isNone = item.confidence === 'none';
+function PickerCell({ id, type, cellW, cellH, gap, isCurrent, isUsed, onPick }) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={() => onPick(id)}
+      style={{ width: cellW, height: cellH, marginBottom: gap, marginRight: gap }}
+    >
+      {type === 'region' ? (
+        <View style={[
+          pk.regionCell,
+          isCurrent && pk.cellCurrent,
+          isUsed && pk.cellUsed,
+        ]}>
+          <Text style={[pk.regionNum, { fontSize: cellW * 0.32 }]}>#{id}</Text>
+        </View>
+      ) : (
+        <View style={[
+          pk.sanctCell,
+          isCurrent && pk.cellCurrent,
+          isUsed && pk.cellUsed,
+        ]}>
+          <Image source={getSanctuaryImage(id)} style={cellStyles.sanctImg} resizeMode="cover" />
+          <View style={cellStyles.idTag}>
+            <Text style={cellStyles.idTagTxt}>#{id}</Text>
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
 
-  const label = item.type === 'region'
-    ? (item.id ? `#${item.id}` : '?')
-    : (item.id ? `Sanctuaire #${item.id}` : '?');
+function CardPicker({ type, currentId, probableIds, usedIds, onPick, onCancel, insets }) {
+  const { width: winW, height: winH } = useWindowDimensions();
+  const isSanct = type === 'sanctuary';
 
-  const bg     = isOk ? COLORS.success + '20' : isLow ? COLORS.gold + '20' : COLORS.primary + '20';
-  const border = isOk ? COLORS.success        : isLow ? COLORS.gold        : COLORS.primary;
+  const cols = 5;
+  const gap = 6;
+  const padH = SPACING.md;
+  const cellW = (winW - padH * 2 - gap * cols) / cols;
+  const cellH = cellW * 1.4;
+  const PAGE_SIZE = 5;
+
+  // ── Ligne 1 sanctuaire : detecte + 4 candidates (fixe) ──
+  const topRowIds = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    const push = (id) => {
+      if (id == null || seen.has(id) || id < 1 || id > SANCTUARY_COUNT) return;
+      seen.add(id);
+      out.push(id);
+    };
+    push(currentId);
+    for (const id of probableIds || []) push(id);
+    return out.slice(0, 5);
+  }, [currentId, probableIds]);
+
+  // ── Reste des sanctuaires (ordre numerique, sans ceux du top) ──
+  const remainingIds = useMemo(() => {
+    const topSet = new Set(topRowIds);
+    const out = [];
+    for (let i = 1; i <= SANCTUARY_COUNT; i++) {
+      if (!topSet.has(i)) out.push(i);
+    }
+    return out;
+  }, [topRowIds]);
+
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(remainingIds.length / PAGE_SIZE);
+  const bottomRowIds = remainingIds.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // ── Region : liste complete dans un FlatList (texte leger) ──
+  const regionIds = useMemo(() => {
+    if (isSanct) return [];
+    const seen = new Set();
+    const out = [];
+    const push = (id) => {
+      if (id == null || seen.has(id) || id < 0 || id >= REGION_TOTAL) return;
+      seen.add(id);
+      out.push(id);
+    };
+    push(currentId);
+    for (const id of usedIds) push(id);
+    for (let i = 0; i < REGION_TOTAL; i++) push(i);
+    return out;
+  }, [isSanct, currentId, usedIds]);
+
+  const renderRegionItem = ({ item: id }) => (
+    <PickerCell
+      id={id} type="region" cellW={cellW} cellH={cellH} gap={gap}
+      isCurrent={id === currentId}
+      isUsed={id !== currentId && usedIds.includes(id)}
+      onPick={onPick}
+    />
+  );
 
   return (
-    <View style={[rc.card, { backgroundColor: bg, borderColor: border }]}>
-      <View style={rc.left}>
-        <Text style={rc.pos}>
-          {item.type === 'region'
-            ? `Carte ${item.index + 1}`
-            : `Sanctuaire ${item.index - REGION_COUNT + 1}`}
+    <View style={[pk.sheet, { maxHeight: winH * 0.85 }]}>
+      <View style={pk.header}>
+        <Text style={pk.title}>
+          {isSanct ? 'Choisir le Sanctuaire' : 'Choisir la carte Région'}
         </Text>
-        <Text style={rc.label}>{label}</Text>
-        {isLow && item.candidates?.length > 1 && (
-          <Text style={rc.alt}>Aussi possible : #{item.candidates[1]?.id}</Text>
-        )}
+        <TouchableOpacity onPress={onCancel} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={pk.close}>Annuler</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={() => onEdit(item.index)} style={rc.editBtn}>
-        <Text style={rc.editTxt}>{isNone || isLow ? '✏️ Corriger' : '✏️'}</Text>
-      </TouchableOpacity>
+
+      {isSanct ? (
+        <View style={{ padding: padH, paddingBottom: insets.bottom + SPACING.lg }}>
+          {/* Ligne 1 : detecte + alternatives */}
+          <View style={pk.sanctRow}>
+            {topRowIds.map((id) => (
+              <PickerCell
+                key={id} id={id} type="sanctuary" cellW={cellW} cellH={cellH} gap={gap}
+                isCurrent={id === currentId}
+                isUsed={id !== currentId && usedIds.includes(id)}
+                onPick={onPick}
+              />
+            ))}
+          </View>
+
+          {/* Ligne 2 : parcourir les autres avec ◀ ▶ */}
+          <View style={pk.sanctRow}>
+            {bottomRowIds.map((id) => (
+              <PickerCell
+                key={id} id={id} type="sanctuary" cellW={cellW} cellH={cellH} gap={gap}
+                isCurrent={id === currentId}
+                isUsed={id !== currentId && usedIds.includes(id)}
+                onPick={onPick}
+              />
+            ))}
+          </View>
+
+          <View style={pk.navRow}>
+            <TouchableOpacity
+              onPress={() => setPage((p) => p - 1)}
+              disabled={page === 0}
+              style={[pk.navBtn, page === 0 && pk.navBtnDisabled]}
+            >
+              <Text style={[pk.navBtnTxt, page === 0 && pk.navBtnTxtDisabled]}>◀ Préc.</Text>
+            </TouchableOpacity>
+            <Text style={pk.navPage}>{page + 1} / {totalPages}</Text>
+            <TouchableOpacity
+              onPress={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages - 1}
+              style={[pk.navBtn, page >= totalPages - 1 && pk.navBtnDisabled]}
+            >
+              <Text style={[pk.navBtnTxt, page >= totalPages - 1 && pk.navBtnTxtDisabled]}>Suiv. ▶</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={regionIds}
+          keyExtractor={(id) => String(id)}
+          numColumns={cols}
+          renderItem={renderRegionItem}
+          contentContainerStyle={{ padding: padH, paddingRight: padH - gap, paddingBottom: insets.bottom + SPACING.lg }}
+          removeClippedSubviews
+          initialNumToRender={15}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
+      )}
     </View>
   );
 }
 
-const rc = StyleSheet.create({
-  card: {
-    borderWidth: 1.5, borderRadius: 10, padding: SPACING.sm,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+const pk = StyleSheet.create({
+  sheet: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
-  left: { flex: 1 },
-  pos: { fontSize: FONTS.small, color: COLORS.textLight, fontWeight: '600', textTransform: 'uppercase' },
-  label: { fontSize: FONTS.subtitle, fontWeight: '700', color: COLORS.text },
-  alt: { fontSize: FONTS.small, color: COLORS.textLight },
-  editBtn: { padding: SPACING.xs },
-  editTxt: { fontSize: FONTS.small, color: COLORS.primary },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  },
+  title: { fontSize: FONTS.subtitle, fontWeight: '700', color: COLORS.text },
+  close: { color: COLORS.primary, fontSize: FONTS.body, fontWeight: '600' },
+  grid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+  },
+  regionCell: {
+    flex: 1,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sanctCell: {
+    flex: 1,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    backgroundColor: COLORS.cardBg,
+  },
+  cellCurrent: { borderColor: COLORS.primary, borderWidth: 3 },
+  cellUsed: { opacity: 0.35 },
+  regionNum: { fontWeight: '700', color: COLORS.text },
+  sanctRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  navRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: SPACING.sm,
+  },
+  navBtn: { paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md },
+  navBtnDisabled: { opacity: 0.3 },
+  navBtnTxt: { color: COLORS.primary, fontWeight: '600', fontSize: FONTS.body },
+  navBtnTxtDisabled: { color: COLORS.textLight },
+  navPage: { color: COLORS.textLight, fontSize: FONTS.small },
 });
 
 // ─── ScanModal principal ───────────────────────────────────────────────────
@@ -158,7 +359,6 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
 
   const handleClose = () => { reset(); onClose(); };
 
-  // Charge la préférence "ne plus afficher" à l'ouverture
   useEffect(() => {
     if (visible) {
       getScanSkipGuide().then((skip) => {
@@ -202,15 +402,32 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const takePhoto = async () => {
     if (!cameraRef.current) return;
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.92 });
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.92,
+        exif: true,
+        skipProcessing: true,
+      });
 
-      // En LANDSCAPE_LEFT, le capteur Android reste en portrait natif.
-      // On force toujours la rotation -90° pour obtenir le bon sens paysage.
+      // La camera est lockee en LANDSCAPE_RIGHT mais selon le device, le resultat
+      // peut sortir en portrait natif, landscape-left (flip 180), etc. — se fier
+      // aux dimensions ne suffit pas. On se base sur l'EXIF Orientation qui reflete
+      // l'orientation physique au moment du clic, et on rotate toujours vers LR.
+      //   1 = portrait natif      -> -90°
+      //   3 = portrait inverse    ->  90°
+      //   6 = landscape-left      -> 180°
+      //   8 = landscape-right     ->  0° (deja bon)
+      const orient = photo.exif?.Orientation ?? 1;
+      const rotate =
+        orient === 3 ? 180 :
+        orient === 6 ? -90 :
+        orient === 8 ?  90 :
+                         0;
+
       let finalUri = photo.uri;
-      if (photo.height > photo.width) {
+      if (rotate !== 0) {
         const rotated = await ImageManipulator.manipulateAsync(
           photo.uri,
-          [{ rotate: -90 }],
+          [{ rotate }],
           { format: ImageManipulator.SaveFormat.JPEG, compress: 0.92 }
         );
         finalUri = rotated.uri;
@@ -235,7 +452,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   };
 
   const handleConfirm = () => {
-    const regions    = results.filter((r) => r.type === 'region').map((r) => ({ id: r.id }));
+    const regions     = results.filter((r) => r.type === 'region').map((r) => ({ id: r.id }));
     const sanctuaries = results.filter((r) => r.type === 'sanctuary').map((r) => ({ id: r.id }));
     onComplete({ regions, sanctuaries });
     reset();
@@ -243,6 +460,42 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
 
   const allIdentified = results.length > 0 && results.every((r) => r.id !== null);
 
+  // ─── Decoupage des resultats en rangees ──────────────────────────────
+  const sanctuaryItems = useMemo(
+    () => results.filter((r) => r.type === 'sanctuary').sort((a, b) => a.index - b.index),
+    [results]
+  );
+  const regionsRow1 = useMemo(
+    () => results.filter((r) => r.type === 'region' && r.row === 0).sort((a, b) => a.col - b.col),
+    [results]
+  );
+  const regionsRow2 = useMemo(
+    () => results.filter((r) => r.type === 'region' && r.row === 1).sort((a, b) => a.col - b.col),
+    [results]
+  );
+
+  // ─── Sizing de la grille ─────────────────────────────────────────────
+  const GRID_GAP = 6;
+  const gridW = winW - SPACING.md * 2;
+  const regionCellW = (gridW - GRID_GAP * 3) / 4;
+  const regionCellH = regionCellW * 1.4;
+  const sanctCount = Math.max(1, sanctuaryItems.length);
+  const sanctCellW = Math.min(
+    regionCellW * 0.7,
+    (gridW - GRID_GAP * (sanctCount - 1)) / sanctCount,
+  );
+  const sanctCellH = sanctCellW * 1.4;
+
+  // ─── Donnees pour le picker d'edition ───────────────────────────────
+  const editingItem = editingIndex != null ? results.find((r) => r.index === editingIndex) : null;
+  const editingUsedIds = useMemo(() => {
+    if (!editingItem) return [];
+    return results
+      .filter((r) => r.type === editingItem.type && r.index !== editingIndex && r.id != null)
+      .map((r) => r.id);
+  }, [results, editingItem, editingIndex]);
+
+  // ─── Cadre camera ───────────────────────────────────────────────────
   const shutterAreaW = 80;
   const PADDING = 8;
   const availW = winW - shutterAreaW - insets.left - insets.right - PADDING * 2;
@@ -255,7 +508,6 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
       <View style={[s.container, step !== 'camera' && { paddingTop: insets.top }]}>
 
-        {/* Header — masqué en mode caméra */}
         {step !== 'camera' && (
           <View style={s.header}>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -271,7 +523,6 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
           <View style={s.stepContent}>
             <Text style={s.stepTitle}>Prépare ton tableau</Text>
             <View style={s.instructionBox}>
-              {/* Schéma visuel */}
               <View style={s.schema}>
                 <View style={s.schemaRow}>
                   {['S1','S2','S3','…'].map((l) => (
@@ -321,37 +572,30 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
           </View>
         )}
 
-        {/* ── Étape 2 : Caméra (plein écran, paysage) ── */}
+        {/* ── Étape 2 : Caméra ── */}
         {step === 'camera' && permission?.granted && (
           <View style={s.cameraContainer}>
             <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} ratio="4:3" />
 
-            {/* Cadre de visée : cellules carrées calculées dynamiquement */}
             <View style={s.cameraOverlay}>
               <View style={[s.cameraFrame, { width: frameW, height: frameH }]}>
-                {/* Coins */}
                 <View style={[s.corner, s.cornerTL]} />
                 <View style={[s.corner, s.cornerTR]} />
                 <View style={[s.corner, s.cornerBL]} />
                 <View style={[s.corner, s.cornerBR]} />
 
-                {/* Séparateur horizontal sanctuaires / régions */}
                 <View style={[s.dividerH, { top: cellSize }]} />
-                {/* Séparateur horizontal entre les 2 rangées de régions */}
                 <View style={[s.dividerH, { top: cellSize * 2 }]} />
-                {/* Séparateurs verticaux — uniquement dans la zone régions (2/3 bas) */}
                 {[1, 2, 3].map((col) => (
                   <View key={col} style={[s.dividerV, { left: cellSize * col, top: cellSize }]} />
                 ))}
 
-                {/* Labels */}
                 <Text style={[s.zoneLabel, { top: 4, left: 6 }]}>Sanctuaires</Text>
                 <Text style={[s.zoneLabel, { top: frameH / 3 + 4, left: 6 }]}>Régions 1–4</Text>
                 <Text style={[s.zoneLabel, { top: (frameH * 2) / 3 + 4, left: 6 }]}>Régions 5–8</Text>
               </View>
             </View>
 
-            {/* Déclencheur — colonne droite */}
             <View style={[s.cameraControls, { right: insets.right, width: shutterAreaW }]}>
               <TouchableOpacity style={s.shutterBtn} onPress={takePhoto}>
                 <View style={s.shutterInner} />
@@ -374,33 +618,63 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
           </View>
         )}
 
-        {/* ── Résultats ── */}
+        {/* ── Résultats (grille type plateau) ── */}
         {step === 'results' && (
           <View style={{ flex: 1 }}>
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={s.resultsList}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={s.resultsScroll}>
               {photoUri && (
                 <Image source={{ uri: photoUri }} style={s.photoPreview} resizeMode="contain" />
               )}
 
-              <Text style={s.sectionLabel}>Cartes Région (ordre de jeu →)</Text>
-              {results.filter((r) => r.type === 'region').map((item) => (
-                <ResultCard key={item.index} item={item} onEdit={setEditingIndex} />
-              ))}
+              <Text style={s.sectionLabel}>Ton tableau reconstitué</Text>
 
-              {results.some((r) => r.type === 'sanctuary') && (
-                <>
-                  <Text style={[s.sectionLabel, { marginTop: SPACING.md }]}>Sanctuaires</Text>
-                  {results.filter((r) => r.type === 'sanctuary').map((item) => (
-                    <ResultCard key={item.index} item={item} onEdit={setEditingIndex} />
+              <View style={[s.board, { gap: GRID_GAP }]}>
+                {sanctuaryItems.length > 0 && (
+                  <View style={[s.boardRow, { gap: GRID_GAP, justifyContent: 'center' }]}>
+                    {sanctuaryItems.map((item) => (
+                      <SanctuaryCell
+                        key={item.index}
+                        item={item}
+                        width={sanctCellW}
+                        height={sanctCellH}
+                        onPress={() => setEditingIndex(item.index)}
+                      />
+                    ))}
+                  </View>
+                )}
+
+                <View style={[s.boardRow, { gap: GRID_GAP }]}>
+                  {regionsRow1.map((item) => (
+                    <RegionCell
+                      key={item.index}
+                      item={item}
+                      width={regionCellW}
+                      height={regionCellH}
+                      onPress={() => setEditingIndex(item.index)}
+                    />
                   ))}
-                </>
-              )}
+                </View>
+
+                <View style={[s.boardRow, { gap: GRID_GAP }]}>
+                  {regionsRow2.map((item) => (
+                    <RegionCell
+                      key={item.index}
+                      item={item}
+                      width={regionCellW}
+                      height={regionCellH}
+                      onPress={() => setEditingIndex(item.index)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <Text style={s.hint}>Tape sur une carte pour la modifier</Text>
             </ScrollView>
 
             <View style={[s.footer, { paddingBottom: insets.bottom + SPACING.md }]}>
               {!allIdentified && (
                 <Text style={s.warningTxt}>
-                  ⚠️ Certaines cartes n'ont pas été reconnues — appuie sur ✏️ pour les corriger.
+                  ⚠️ Certaines cartes n'ont pas été reconnues — tape dessus pour les corriger.
                 </Text>
               )}
               <View style={s.row}>
@@ -419,7 +693,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
           </View>
         )}
 
-        {/* ── Modal correction ── */}
+        {/* ── Modal correction (picker visuel) ── */}
         <Modal
           visible={editingIndex !== null}
           transparent
@@ -427,14 +701,17 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
           onRequestClose={() => setEditingIndex(null)}
         >
           <View style={s.editOverlay}>
-            <View style={s.editSheet}>
-              <Text style={s.editTitle}>
-                {results[editingIndex]?.type === 'region'
-                  ? 'Numéro de la carte Région'
-                  : 'ID du Sanctuaire'}
-              </Text>
-              <InlineNumpad onConfirm={applyEdit} onCancel={() => setEditingIndex(null)} />
-            </View>
+            {editingItem && (
+              <CardPicker
+                type={editingItem.type}
+                currentId={editingItem.id}
+                probableIds={editingItem.candidates || []}
+                usedIds={editingUsedIds}
+                onPick={applyEdit}
+                onCancel={() => setEditingIndex(null)}
+                insets={insets}
+              />
+            )}
           </View>
         </Modal>
       </View>
@@ -510,7 +787,6 @@ const s = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
   },
-  // Coins de visée
   corner: {
     position: 'absolute', width: 18, height: 18,
     borderColor: COLORS.white, borderWidth: 3,
@@ -519,7 +795,6 @@ const s = StyleSheet.create({
   cornerTR: { top: -1, right: -1, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 6 },
   cornerBL: { bottom: -1, left: -1, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 6 },
   cornerBR: { bottom: -1, right: -1, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 6 },
-  // Grille indicative
   dividerH: {
     position: 'absolute', left: 0, right: 0,
     height: 1, backgroundColor: 'rgba(255,255,255,0.35)',
@@ -537,7 +812,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3,
     letterSpacing: 0.3,
   },
-  // Bouton déclencheur — colonne droite fixe
   cameraControls: {
     position: 'absolute', top: 0, bottom: 0,
     justifyContent: 'center', alignItems: 'center',
@@ -557,12 +831,19 @@ const s = StyleSheet.create({
   processingTxt: { fontSize: FONTS.subtitle, color: COLORS.text, fontWeight: '600' },
 
   // Résultats
-  photoPreview: { width: '100%', height: 120, borderRadius: 10, marginBottom: SPACING.sm },
-  resultsList: { padding: SPACING.md, gap: SPACING.sm, paddingBottom: SPACING.xl },
+  photoPreview: { width: '100%', aspectRatio: 4 / 3, borderRadius: 10, marginBottom: SPACING.sm },
+  resultsScroll: { padding: SPACING.md, paddingBottom: SPACING.xl },
   sectionLabel: {
     fontSize: FONTS.small, fontWeight: '700', color: COLORS.textLight,
-    textTransform: 'uppercase', letterSpacing: 0.5,
+    textTransform: 'uppercase', letterSpacing: 0.5, marginTop: SPACING.sm, marginBottom: SPACING.sm,
   },
+  board: { alignItems: 'stretch' },
+  boardRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  hint: {
+    marginTop: SPACING.md, textAlign: 'center',
+    fontSize: FONTS.small, color: COLORS.textLight, fontStyle: 'italic',
+  },
+
   footer: {
     padding: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.border,
     backgroundColor: COLORS.background, gap: SPACING.sm,
@@ -570,9 +851,4 @@ const s = StyleSheet.create({
   warningTxt: { fontSize: FONTS.small, color: COLORS.primary, textAlign: 'center' },
 
   editOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  editSheet: {
-    backgroundColor: COLORS.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    alignItems: 'center', gap: SPACING.md,
-  },
-  editTitle: { fontSize: FONTS.subtitle, fontWeight: '700', color: COLORS.text, paddingTop: SPACING.lg },
 });

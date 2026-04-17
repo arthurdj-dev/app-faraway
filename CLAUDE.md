@@ -1,6 +1,41 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # app-faraway — Contexte du projet
 
 Application Android (Expo/React Native) pour compter les points d'une partie du jeu de société **Faraway**.
+
+---
+
+## Commandes
+
+### App (Expo)
+
+```bash
+npm start              # Metro bundler (Expo Go / dev client)
+npm run android        # build + lance sur Android
+npm run generate-cards # régénère les vignettes depuis scripts/generateCardTemplates.js (utilise sharp)
+```
+
+Pas de linter ni de suite de tests configurée côté JS — vérifier `package.json` avant d'en inventer.
+
+### Backend ORB (Python / FastAPI)
+
+Répertoire : `backend/`
+
+```bash
+pip install -r requirements.txt
+py -m uvicorn main:app --reload --port 8000   # local
+```
+
+- `sanctuary_descriptors.pkl` est **pré-calculé** par `scripts/precompute_sanctuary_descriptors.py` — à régénérer si les images de référence de sanctuaires changent.
+- Scripts de test ad-hoc à la racine de `backend/` : `test_local.py`, `test_remote.py`, `test_remote2.py`, `test_candidates.py` — ce sont des scripts manuels (pas pytest), ils s'exécutent directement (`py backend/test_remote.py`).
+- Déploiement : `Dockerfile` présent (service distant dont l'URL est codée dans `src/utils/tableauScanner.js`).
+
+### POCs de vision
+
+`scripts/orb_*_poc.py` — scripts d'expérimentation ORB autonomes (hors flux app). À lancer à la main pendant l'itération sur les paramètres de matching.
 
 ---
 
@@ -16,14 +51,29 @@ Application Android (Expo/React Native) pour compter les points d'une partie du 
 ## Architecture
 
 ```
-App.js                          ← SafeAreaProvider + carousel 3 onglets
+App.js                          ← SafeAreaProvider + carousel 3 onglets, passe isActive à History/Stats
 src/
   constants/theme.js            ← palette de couleurs et tailles
-  components/TabBar.js          ← barre d'onglets avec indicateur
+  components/
+    TabBar.js                   ← barre d'onglets avec indicateur
+    ScanModal.js                ← scan photo + picker visuel de correction
+    GroqKeyModal.js             ← saisie/édition de la clé Groq
   screens/
-    NewGame.js                  ← saisie des joueurs + scan + résultats
-    History.js                  ← historique des parties (à construire)
-    Stats.js                    ← statistiques (à construire)
+    NewGame.js                  ← saisie joueurs + scan + sauvegarde auto en fin de partie
+    History.js                  ← liste des parties (reload sur isActive), suppression, réouverture via Results
+    Stats.js                    ← stats agrégées + BoardPreview visuel d'une partie
+    Results.js                  ← décompte final, accepte backLabel (ex: "Retour" depuis l'historique)
+  utils/
+    tableauScanner.js           ← orchestration Groq (régions) + backend ORB (sanctuaires)
+    storage.js                  ← AsyncStorage : clé Groq, scan_skip_guide, historique des parties
+    sanctuaryImages.js          ← map id → require() pour les vignettes de sanctuaires
+    scoring.js                  ← calculateScore / calculateAllScores
+  data/
+    region_cards.json           ← 77 cartes (0–76)
+    sanctuary_cards.json        ← 53 cartes (1–53)
+backend/
+  main.py                       ← FastAPI : POST /match-sanctuaries (ORB + homographie + NMS)
+  sanctuary_descriptors.pkl     ← descripteurs ORB pré-calculés
 ```
 
 ## Préférences UI/UX
@@ -111,27 +161,48 @@ Règle spéciale : certains Sanctuaires sont liés à une couleur de biome et **
 ## Architecture de reconnaissance (implémentée)
 
 - **Un seul scan** du tableau complet suffit (pas de scan individuel)
-- **Modèle** : Groq API, Llama 4 Scout (`meta-llama/llama-4-scout-17b-16e-instruct`)
-- **Clé API** : saisie par l'utilisateur dans l'app, stockée via AsyncStorage
+- **Hybride** : Groq (vision) pour les régions + backend Python (ORB) pour les sanctuaires
+- **Clé Groq** : saisie par l'utilisateur dans l'app, stockée via AsyncStorage
+- **Backend ORB** : service FastAPI distant (URL configurée dans `tableauScanner.js`)
 
 ### Flow (`src/utils/tableauScanner.js`)
 
 1. Resize photo → 1920px JPEG base64
-2. **Appel 1** : Groq lit les 8 numéros de cartes Région (0–76) → lookup `region_cards.json`
-3. Calcul local du nombre de sanctuaires (comparaison des durées d'exploration)
-4. **Appel 2** : Groq décrit les N sanctuaires avec ancres visuelles des régions identifiées
-5. Matching local : `matchSanctuary()` filtre par biome + quest_points puis score par ressources
+2. **Appel Groq** (Llama 4 Scout, `meta-llama/llama-4-scout-17b-16e-instruct`) : lit les 8 numéros de cartes Région (0–76) + renvoie une `sanctuary_zone` (bbox fractionnaire de la rangée de sanctuaires) → lookup `region_cards.json`
+3. Calcul local du nombre de sanctuaires attendus via comparaison des durées d'exploration
+4. **Appel backend ORB** (`POST /match-sanctuaries`) avec `image_base64`, `zone` (paddée de 4% en haut/bas car Groq sous-estime souvent la bbox) et `expected_count`
+5. Détections triées par X (gauche → droite) ; chaque détection expose `candidates[]` (4 meilleures alternatives) pour le picker de correction
+
+### Backend ORB (`backend/main.py`)
+
+- Charge les descripteurs pré-calculés (`sanctuary_descriptors.pkl`) au démarrage
+- Pour chaque carte de référence : match ORB → Lowe ratio → `findHomography` RANSAC → quad projeté → validation (convexe, aire, ratio côtés)
+- **NMS** sur les quads (IoU > 0.3) pour éliminer les doublons spatiaux
+- **Seuils d'inliers** : strict (100) par défaut, relâché (30) si `expected_count` fourni (tronque ensuite à top-N)
+- Retourne `{detections: [{id, inliers, good_matches, quad, candidates: [{id, inliers}, ...]}], elapsed_ms}` — les `candidates` sont (1) les cartes qui chevauchent spatialement le slot, puis (2) complétées par les meilleurs scores globaux restants jusqu'à 4
+
+### Correction manuelle (`ScanModal.js`)
+
+- Après scan : grille 2 rangées régions (numéros) + 1 rangée sanctuaires (vignettes via `sanctuaryImages.js`)
+- Cartes avec `confidence === 'low'` bordurées or, `'none'` bordurées orange
+- Tap sur une carte → picker en bottom sheet
+  - Régions : `FlatList` paginé 0–76, 5 colonnes
+  - Sanctuaires : 1ère ligne = détectée + 4 `candidates` du backend, 2ème ligne = parcourir les autres avec ◀▶
+
+### Persistance (`src/utils/storage.js` + AsyncStorage)
+
+- `groq_api_key`, `scan_skip_guide`
+- `game_history` : tableau `[{id, date, players: [{name, total, rank, regions, sanctuaries}]}]`
+- API : `getHistory / saveGame / deleteGame / clearHistory`
+- `NewGame` sauvegarde automatiquement en fin de partie (dans `handleNewGame`)
+- `History` et `Stats` rechargent via prop `isActive` passée depuis `App.js` (reload au focus de l'onglet)
 
 ### Base de données locale
 
 - `region_cards.json` : 77 cartes (id 0–76), `{ biome, duration, timeOfDay, clues, resources: { stones, chimeras, thistles }, quests }`
 - `sanctuary_cards.json` : 53 cartes (id 1–53), `{ biome, bonus: { night, clues, resources }, quests }`
+- Vignettes sanctuaires : `assets/sanctuaires/sanctuaire-{id}/` (cf. `sanctuaryImages.js`)
 
 ### Biomes
 
 4 biomes : `vert`, `jaune`, `rouge`, `bleu` — plus `null` pour les cartes sans biome (fond gris/noir)
-
-## Ce qui reste à faire
-
-- [ ] Persistance des parties pour l'historique
-- [ ] Écran Historique et Statistiques

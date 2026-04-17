@@ -133,6 +133,11 @@ Return ONLY valid JSON:
 
 // ─── Calcul du nombre de sanctuaires ──────────────────────────────────────
 
+function quadMeanX(quad) {
+  if (!Array.isArray(quad) || quad.length === 0) return 0;
+  return quad.reduce((sum, pt) => sum + (pt?.[0] ?? 0), 0) / quad.length;
+}
+
 function countSanctuaries(regionIds) {
   let total = 0;
   for (let i = 1; i < regionIds.length; i++) {
@@ -146,16 +151,22 @@ function countSanctuaries(regionIds) {
 
 // ─── Appel 2 : backend ORB ─────────────────────────────────────────────────
 
-async function callBackendSanctuaries(base64, zone) {
+async function callBackendSanctuaries(base64, zone, expectedCount) {
   const body = { image_base64: base64 };
   if (zone && typeof zone.h === 'number' && zone.h > 0) {
+    // Groq sous-estime souvent la zone : un crop trop serre coupe le bas
+    // des cartes et fait basculer l'ORB vers des faux positifs.
+    const pad = 0.04;
+    const y = Math.max(0, (Number(zone.y) || 0) - pad);
+    const h = Math.min(1 - y, (Number(zone.h) || 0) + pad * 2);
     body.zone = {
       x: Number(zone.x) || 0,
-      y: Number(zone.y) || 0,
+      y,
       w: Number(zone.w) || 1,
-      h: Number(zone.h),
+      h,
     };
   }
+  if (expectedCount > 0) body.expected_count = expectedCount;
   const resp = await fetch(`${BACKEND_URL}/match-sanctuaries`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -198,10 +209,12 @@ export async function scanTableau(photoUri) {
   const zone = board.sanctuary_zone ?? null;
 
   if (expectedCount > 0 || zone) {
-    const backendResp = await callBackendSanctuaries(resized.base64, zone);
+    const backendResp = await callBackendSanctuaries(resized.base64, zone, expectedCount);
     console.log('[ORB backend]', JSON.stringify(backendResp, null, 2));
 
-    const detections = backendResp.detections ?? [];
+    const detections = [...(backendResp.detections ?? [])].sort(
+      (a, b) => quadMeanX(a.quad) - quadMeanX(b.quad),
+    );
     for (let i = 0; i < detections.length; i++) {
       const d = detections[i];
       results.push({
@@ -210,6 +223,7 @@ export async function scanTableau(photoUri) {
         id:         d.id,
         confidence: d.inliers >= HIGH_CONFIDENCE_INLIERS ? 'high' : 'low',
         inliers:    d.inliers,
+        candidates: Array.isArray(d.candidates) ? d.candidates.map((c) => c.id) : [],
       });
     }
   }

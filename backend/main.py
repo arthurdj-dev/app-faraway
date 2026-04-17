@@ -28,9 +28,13 @@ DESCRIPTORS_PATH = BACKEND_DIR / "sanctuary_descriptors.pkl"
 ORB_FEATURES = 10000
 LOWE_RATIO = 0.75
 MIN_MATCHES = 10
-MIN_INLIERS = 100
+MIN_INLIERS_STRICT = 100
+MIN_INLIERS_RELAXED = 30
+MIN_INLIERS_ALT = 15  # seuil bas utilise pour collecter les candidats alternatifs par slot
 RANSAC_THRESHOLD = 5.0
 IOU_THRESHOLD = 0.3
+ALT_OVERLAP_THRESHOLD = 0.2  # IoU mini entre un alt et la detection acceptee pour etre du meme slot
+MAX_ALTERNATIVES = 4
 MIN_QUAD_AREA_FRAC = 0.01
 MAX_QUAD_AREA_FRAC = 0.6
 MAX_SIDE_RATIO = 4.0
@@ -72,6 +76,12 @@ class Zone(BaseModel):
 class MatchRequest(BaseModel):
     image_base64: str
     zone: Optional[Zone] = None
+    expected_count: Optional[int] = None
+
+
+class Candidate(BaseModel):
+    id: int
+    inliers: int
 
 
 class Detection(BaseModel):
@@ -79,6 +89,7 @@ class Detection(BaseModel):
     inliers: int
     good_matches: int
     quad: Optional[list[list[float]]] = None
+    candidates: list[Candidate] = []
 
 
 class MatchResponse(BaseModel):
@@ -119,7 +130,8 @@ def validate_quad(quad: np.ndarray, shape: tuple) -> bool:
     return True
 
 
-def match_pair(des_q, des_r, kp_q, kp_r, ref_shape, image_shape):
+def match_pair(des_q, des_r, kp_q, kp_r, ref_shape, image_shape,
+               min_inliers=MIN_INLIERS_STRICT):
     if des_q is None or des_r is None or len(des_q) < 2 or len(des_r) < 2:
         return 0, 0, None
     bf = cv2.BFMatcher(cv2.NORM_HAMMING)
@@ -137,7 +149,7 @@ def match_pair(des_q, des_r, kp_q, kp_r, ref_shape, image_shape):
     if H is None:
         return len(good), 0, None
     inliers = int(mask.sum())
-    if inliers < MIN_INLIERS:
+    if inliers < min_inliers:
         return len(good), inliers, None
     h, w = ref_shape[:2]
     corners = np.float32([[0, 0], [w, 0], [w, h], [0, h]]).reshape(-1, 1, 2)
@@ -187,18 +199,27 @@ def match_sanctuaries(req: MatchRequest) -> MatchResponse:
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     kp_q, des_q = orb.detectAndCompute(gray, None)
 
-    candidates = []
+    # Quand on sait combien de sanctuaires chercher, on assouplit le seuil
+    # puis on tronque à top-N après NMS — évite de rater une carte faible.
+    use_relaxed = bool(req.expected_count and req.expected_count > 0)
+    floor = MIN_INLIERS_RELAXED if use_relaxed else MIN_INLIERS_STRICT
+
+    # On scanne TOUJOURS avec le seuil le plus bas pour collecter les alternatives
+    # qui serviront au picker. Les detections gardees utilisent `floor` normal.
+    all_matches = []
     for rid, (kp_r, des_r, shape_r) in REFS.items():
         good, inl, quad = match_pair(
-            des_q, des_r, kp_q, kp_r, shape_r, img.shape
+            des_q, des_r, kp_q, kp_r, shape_r, img.shape,
+            min_inliers=MIN_INLIERS_ALT,
         )
         if quad is not None:
-            candidates.append((rid, good, inl, quad))
+            all_matches.append((rid, good, inl, quad))
 
-    candidates.sort(key=lambda c: c[2], reverse=True)
+    strict = [m for m in all_matches if m[2] >= floor]
+    strict.sort(key=lambda c: c[2], reverse=True)
 
     accepted = []
-    for rid, good, inl, quad in candidates:
+    for rid, good, inl, quad in strict:
         overlap = any(
             quad_iou(quad, a[3], img.shape) > IOU_THRESHOLD
             for a in accepted
@@ -206,10 +227,40 @@ def match_sanctuaries(req: MatchRequest) -> MatchResponse:
         if not overlap:
             accepted.append((rid, good, inl, quad))
 
-    detections = [
-        Detection(id=rid, inliers=inl, good_matches=good, quad=quad.tolist())
-        for rid, good, inl, quad in accepted
-    ]
+    if use_relaxed:
+        accepted = accepted[:req.expected_count]
+
+    accepted_ids = {rid for rid, _, _, _ in accepted}
+
+    detections = []
+    for rid, good, inl, quad in accepted:
+        # 1) Candidats qui chevauchent spatialement ce slot
+        alts = []
+        for r2id, g2, i2, q2 in all_matches:
+            if r2id == rid or r2id in accepted_ids:
+                continue
+            if quad_iou(quad, q2, img.shape) > ALT_OVERLAP_THRESHOLD:
+                alts.append(Candidate(id=r2id, inliers=i2))
+        alts.sort(key=lambda c: c.inliers, reverse=True)
+
+        # 2) Si moins de MAX_ALTERNATIVES, completer avec les meilleurs scores
+        #    globaux (pas deja utilises) pour toujours proposer 4 options.
+        if len(alts) < MAX_ALTERNATIVES:
+            used = {rid} | accepted_ids | {c.id for c in alts}
+            global_pool = sorted(all_matches, key=lambda m: m[2], reverse=True)
+            for r2id, g2, i2, q2 in global_pool:
+                if r2id in used:
+                    continue
+                alts.append(Candidate(id=r2id, inliers=i2))
+                used.add(r2id)
+                if len(alts) >= MAX_ALTERNATIVES:
+                    break
+
+        detections.append(Detection(
+            id=rid, inliers=inl, good_matches=good,
+            quad=quad.tolist(),
+            candidates=alts[:MAX_ALTERNATIVES],
+        ))
 
     elapsed_ms = int((time.time() - t0) * 1000)
     return MatchResponse(detections=detections, elapsed_ms=elapsed_ms)

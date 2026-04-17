@@ -47,10 +47,10 @@ function AppContent() {
           <NewGame />
         </View>
         <View style={{ width }}>
-          <History />
+          <History isActive={activeTab === 1} />
         </View>
         <View style={{ width }}>
-          <Stats />
+          <Stats isActive={activeTab === 2} />
         </View>
       </ScrollView>
     </SafeAreaView>

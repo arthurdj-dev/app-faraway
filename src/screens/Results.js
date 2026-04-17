@@ -26,7 +26,7 @@ const ROW_H       = 44;
 const HEADER_H    = 56;
 const TOTAL_H     = 56;
 
-export default function Results({ players, onNewGame }) {
+export default function Results({ players, onNewGame, backLabel }) {
   const insets = useSafeAreaInsets();
 
   const scored = useMemo(() => calculateAllScores(players), [players]);
@@ -192,7 +192,7 @@ export default function Results({ players, onNewGame }) {
       {/* ── Bouton Nouvelle partie ── */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <TouchableOpacity style={styles.newGameBtn} onPress={onNewGame} activeOpacity={0.8}>
-          <Text style={styles.newGameBtnText}>Nouvelle partie</Text>
+          <Text style={styles.newGameBtnText}>{backLabel || 'Nouvelle partie'}</Text>
         </TouchableOpacity>
       </View>
 
