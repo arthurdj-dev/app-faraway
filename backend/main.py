@@ -1,10 +1,13 @@
 """
-FastAPI backend: matche une photo de tableau contre les 53 sanctuaires
-de reference via ORB + homographie + NMS.
+FastAPI backend: matche une photo de tableau contre les references via ORB + homographie + NMS.
 
 Contract:
     POST /match-sanctuaries
-    body: { image_base64: string, zone?: {x,y,w,h} (fractions 0-1) }
+    body: { image_base64: string, zone?: {x,y,w,h} (fractions 0-1), expected_count?: int }
+    response: { detections: [{id, inliers, good_matches, quad?}], elapsed_ms }
+
+    POST /match-regions
+    body: { image_base64: string, expected_count?: int }
     response: { detections: [{id, inliers, good_matches, quad?}], elapsed_ms }
 
 Run locally:
@@ -25,6 +28,7 @@ import logging
 
 BACKEND_DIR = Path(__file__).parent
 DESCRIPTORS_PATH = BACKEND_DIR / "sanctuary_descriptors.pkl"
+REGION_DESCRIPTORS_PATH = BACKEND_DIR / "region_descriptors.pkl"
 
 ORB_FEATURES = 10000
 LOWE_RATIO = 0.75
@@ -45,8 +49,8 @@ MAX_IMAGE_B64_BYTES = 10 * 1024 * 1024  # 10 MB
 logger = logging.getLogger(__name__)
 
 
-def _load_refs():
-    with open(DESCRIPTORS_PATH, "rb") as f:
+def _load_refs(path: Path) -> dict:
+    with open(path, "rb") as f:
         data = pickle.load(f)
     refs = {}
     for rid, d in data.items():
@@ -58,15 +62,26 @@ def _load_refs():
 
 logging.basicConfig(level=logging.INFO)
 logger.info("Loading reference descriptors...")
+
 try:
-    REFS = _load_refs()
+    REFS = _load_refs(DESCRIPTORS_PATH)
 except Exception as exc:
     logger.exception("Failed to load sanctuary descriptors")
     raise RuntimeError(f"Cannot start: {exc}") from exc
 logger.info("Loaded %d sanctuaires.", len(REFS))
 
+try:
+    REGION_REFS = _load_refs(REGION_DESCRIPTORS_PATH)
+    logger.info("Loaded %d régions.", len(REGION_REFS))
+except FileNotFoundError:
+    REGION_REFS = {}
+    logger.warning("region_descriptors.pkl not found — run scripts/precompute_region_descriptors.py first")
+except Exception as exc:
+    logger.exception("Failed to load region descriptors")
+    raise RuntimeError(f"Cannot start: {exc}") from exc
 
-app = FastAPI(title="Faraway Sanctuary Matcher")
+
+app = FastAPI(title="Faraway Matcher")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -184,24 +199,17 @@ def quad_iou(q1, q2, shape):
     return inter / union if union else 0.0
 
 
-@app.post("/match-sanctuaries", response_model=MatchResponse)
-def match_sanctuaries(req: MatchRequest) -> MatchResponse:
-    t0 = time.time()
-
-    try:
-        img = decode_image(req.image_base64)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
-
-    if req.zone is not None:
+def _match_against(refs: dict, img: np.ndarray, expected_count: Optional[int],
+                   zone: Optional[Zone] = None) -> list[Detection]:
+    """Core ORB matching pipeline: feature extraction, NMS, candidate collection."""
+    if zone is not None:
         h, w = img.shape[:2]
-        z = req.zone
-        x0 = int(max(0.0, min(1.0, z.x)) * w)
-        y0 = int(max(0.0, min(1.0, z.y)) * h)
-        x1 = int(max(0.0, min(1.0, z.x + z.w)) * w)
-        y1 = int(max(0.0, min(1.0, z.y + z.h)) * h)
+        x0 = int(max(0.0, min(1.0, zone.x)) * w)
+        y0 = int(max(0.0, min(1.0, zone.y)) * h)
+        x1 = int(max(0.0, min(1.0, zone.x + zone.w)) * w)
+        y1 = int(max(0.0, min(1.0, zone.y + zone.h)) * h)
         if x1 <= x0 or y1 <= y0:
-            raise HTTPException(status_code=400, detail="Invalid zone")
+            raise ValueError("Invalid zone")
         img = img[y0:y1, x0:x1]
 
     img = resize_max(img, IMAGE_MAX_DIM)
@@ -210,15 +218,11 @@ def match_sanctuaries(req: MatchRequest) -> MatchResponse:
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     kp_q, des_q = orb.detectAndCompute(gray, None)
 
-    # Quand on sait combien de sanctuaires chercher, on assouplit le seuil
-    # puis on tronque à top-N après NMS — évite de rater une carte faible.
-    use_relaxed = bool(req.expected_count and req.expected_count > 0)
+    use_relaxed = bool(expected_count and expected_count > 0)
     floor = MIN_INLIERS_RELAXED if use_relaxed else MIN_INLIERS_STRICT
 
-    # On scanne TOUJOURS avec le seuil le plus bas pour collecter les alternatives
-    # qui serviront au picker. Les detections gardees utilisent `floor` normal.
     all_matches = []
-    for rid, (kp_r, des_r, shape_r) in REFS.items():
+    for rid, (kp_r, des_r, shape_r) in refs.items():
         good, inl, quad = match_pair(
             des_q, des_r, kp_q, kp_r, shape_r, img.shape,
             min_inliers=MIN_INLIERS_ALT,
@@ -239,13 +243,12 @@ def match_sanctuaries(req: MatchRequest) -> MatchResponse:
             accepted.append((rid, good, inl, quad))
 
     if use_relaxed:
-        accepted = accepted[:req.expected_count]
+        accepted = accepted[:expected_count]
 
     accepted_ids = {rid for rid, _, _, _ in accepted}
 
     detections = []
     for rid, good, inl, quad in accepted:
-        # 1) Candidats qui chevauchent spatialement ce slot
         alts = []
         for r2id, g2, i2, q2 in all_matches:
             if r2id == rid or r2id in accepted_ids:
@@ -254,8 +257,6 @@ def match_sanctuaries(req: MatchRequest) -> MatchResponse:
                 alts.append(Candidate(id=r2id, inliers=i2))
         alts.sort(key=lambda c: c.inliers, reverse=True)
 
-        # 2) Si moins de MAX_ALTERNATIVES, completer avec les meilleurs scores
-        #    globaux (pas deja utilises) pour toujours proposer 4 options.
         if len(alts) < MAX_ALTERNATIVES:
             used = {rid} | accepted_ids | {c.id for c in alts}
             global_pool = sorted(all_matches, key=lambda m: m[2], reverse=True)
@@ -273,10 +274,46 @@ def match_sanctuaries(req: MatchRequest) -> MatchResponse:
             candidates=alts[:MAX_ALTERNATIVES],
         ))
 
+    return detections
+
+
+@app.post("/match-sanctuaries", response_model=MatchResponse)
+def match_sanctuaries(req: MatchRequest) -> MatchResponse:
+    t0 = time.time()
+    try:
+        img = decode_image(req.image_base64)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
+    try:
+        detections = _match_against(REFS, img, req.expected_count, req.zone)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    elapsed_ms = int((time.time() - t0) * 1000)
+    return MatchResponse(detections=detections, elapsed_ms=elapsed_ms)
+
+
+@app.post("/match-regions", response_model=MatchResponse)
+def match_regions(req: MatchRequest) -> MatchResponse:
+    if not REGION_REFS:
+        raise HTTPException(status_code=503, detail="Region descriptors not loaded — run precompute_region_descriptors.py first")
+    t0 = time.time()
+    try:
+        img = decode_image(req.image_base64)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
+    expected = req.expected_count if req.expected_count else 8
+    try:
+        detections = _match_against(REGION_REFS, img, expected)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     elapsed_ms = int((time.time() - t0) * 1000)
     return MatchResponse(detections=detections, elapsed_ms=elapsed_ms)
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "references_loaded": len(REFS)}
+    return {
+        "status": "ok",
+        "sanctuaries_loaded": len(REFS),
+        "regions_loaded": len(REGION_REFS),
+    }

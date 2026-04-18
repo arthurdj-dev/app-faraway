@@ -57,23 +57,23 @@ src/
   components/
     TabBar.js                   ← barre d'onglets avec indicateur
     ScanModal.js                ← scan photo + picker visuel de correction
-    GroqKeyModal.js             ← saisie/édition de la clé Groq
   screens/
     NewGame.js                  ← saisie joueurs + scan + sauvegarde auto en fin de partie
     History.js                  ← liste des parties (reload sur isActive), suppression, réouverture via Results
     Stats.js                    ← stats agrégées + BoardPreview visuel d'une partie
     Results.js                  ← décompte final, accepte backLabel (ex: "Retour" depuis l'historique)
   utils/
-    tableauScanner.js           ← orchestration Groq (régions) + backend ORB (sanctuaires)
-    storage.js                  ← AsyncStorage : clé Groq, scan_skip_guide, historique des parties
+    tableauScanner.js           ← orchestration 100% ORB backend (régions + sanctuaires)
+    storage.js                  ← AsyncStorage : scan_skip_guide, historique des parties
     sanctuaryImages.js          ← map id → require() pour les vignettes de sanctuaires
     scoring.js                  ← calculateScore / calculateAllScores
   data/
     region_cards.json           ← 77 cartes (0–76)
     sanctuary_cards.json        ← 53 cartes (1–53)
 backend/
-  main.py                       ← FastAPI : POST /match-sanctuaries (ORB + homographie + NMS)
-  sanctuary_descriptors.pkl     ← descripteurs ORB pré-calculés
+  main.py                       ← FastAPI : POST /match-sanctuaries + POST /match-regions (ORB + homographie + NMS)
+  sanctuary_descriptors.pkl     ← descripteurs ORB pré-calculés (sanctuaires)
+  region_descriptors.pkl        ← descripteurs ORB pré-calculés (régions) — généré par scripts/precompute_region_descriptors.py
 ```
 
 ## Préférences UI/UX
@@ -161,25 +161,34 @@ Règle spéciale : certains Sanctuaires sont liés à une couleur de biome et **
 ## Architecture de reconnaissance (implémentée)
 
 - **Un seul scan** du tableau complet suffit (pas de scan individuel)
-- **Hybride** : Groq (vision) pour les régions + backend Python (ORB) pour les sanctuaires
-- **Clé Groq** : saisie par l'utilisateur dans l'app, stockée via AsyncStorage
+- **100% ORB backend** : aucune API tierce, aucune clé requise
 - **Backend ORB** : service FastAPI distant (URL configurée dans `tableauScanner.js`)
+- **Images de référence** : sanctuaires dans `assets/sanctuary-references/`, régions dans `assets/region-references/`
 
 ### Flow (`src/utils/tableauScanner.js`)
 
 1. Resize photo → 1920px JPEG base64
-2. **Appel Groq** (Llama 4 Scout, `meta-llama/llama-4-scout-17b-16e-instruct`) : lit les 8 numéros de cartes Région (0–76) + renvoie une `sanctuary_zone` (bbox fractionnaire de la rangée de sanctuaires) → lookup `region_cards.json`
-3. Calcul local du nombre de sanctuaires attendus via comparaison des durées d'exploration
-4. **Appel backend ORB** (`POST /match-sanctuaries`) avec `image_base64`, `zone` (paddée de 4% en haut/bas car Groq sous-estime souvent la bbox) et `expected_count`
-5. Détections triées par X (gauche → droite) ; chaque détection expose `candidates[]` (4 meilleures alternatives) pour le picker de correction
+2. **`POST /match-regions`** : détecte les 8 cartes Région + leurs quads (coordonnées pixel)
+3. **Assignation positions 1–8** : tri par Y → plus grande lacune = frontière des 2 rangées → tri par X dans chaque rangée
+4. **Dérivation sanctuary_zone** géométriquement : minY de tous les quads régions → zone = top de l'image jusqu'à ce Y (+4% de marge)
+5. Calcul local du nombre de sanctuaires attendus via comparaison des durées d'exploration
+6. **`POST /match-sanctuaries`** avec `image_base64`, `zone` (dérivée géométriquement) et `expected_count`
+7. Détections triées par X (gauche → droite) ; chaque détection expose `candidates[]` (4 meilleures alternatives) pour le picker de correction
 
 ### Backend ORB (`backend/main.py`)
 
-- Charge les descripteurs pré-calculés (`sanctuary_descriptors.pkl`) au démarrage
+- Charge `sanctuary_descriptors.pkl` et `region_descriptors.pkl` au démarrage
+- Helper `_match_against(refs, img, expected_count, zone)` partagé entre les deux endpoints
 - Pour chaque carte de référence : match ORB → Lowe ratio → `findHomography` RANSAC → quad projeté → validation (convexe, aire, ratio côtés)
 - **NMS** sur les quads (IoU > 0.3) pour éliminer les doublons spatiaux
 - **Seuils d'inliers** : strict (100) par défaut, relâché (30) si `expected_count` fourni (tronque ensuite à top-N)
-- Retourne `{detections: [{id, inliers, good_matches, quad, candidates: [{id, inliers}, ...]}], elapsed_ms}` — les `candidates` sont (1) les cartes qui chevauchent spatialement le slot, puis (2) complétées par les meilleurs scores globaux restants jusqu'à 4
+- Retourne `{detections: [{id, inliers, good_matches, quad, candidates: [{id, inliers}, ...]}], elapsed_ms}`
+
+### Descripteurs pré-calculés
+
+- `scripts/precompute_sanctuary_descriptors.py` → `backend/sanctuary_descriptors.pkl`
+- `scripts/precompute_region_descriptors.py` → `backend/region_descriptors.pkl`
+- Images de référence régions attendues dans `assets/region-references/region-{00..76}/card.jpg`
 
 ### Correction manuelle (`ScanModal.js`)
 
@@ -191,7 +200,7 @@ Règle spéciale : certains Sanctuaires sont liés à une couleur de biome et **
 
 ### Persistance (`src/utils/storage.js` + AsyncStorage)
 
-- `groq_api_key`, `scan_skip_guide`
+- `scan_skip_guide`
 - `game_history` : tableau `[{id, date, players: [{name, total, rank, regions, sanctuaries}]}]`
 - API : `getHistory / saveGame / deleteGame / clearHistory`
 - `NewGame` sauvegarde automatiquement en fin de partie (dans `handleNewGame`)
