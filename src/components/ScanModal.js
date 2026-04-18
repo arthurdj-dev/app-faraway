@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { scanTableau } from '../utils/tableauScanner';
-import { getGroqApiKey, getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
+import { getScanSkipGuide, setScanSkipGuide } from '../utils/storage';
 import { getSanctuaryImage, SANCTUARY_COUNT } from '../utils/sanctuaryImages';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 
@@ -402,20 +402,6 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   }, [visible]);
 
   const openCamera = async () => {
-    const groqKey = await getGroqApiKey();
-    if (!groqKey) {
-      Alert.alert(
-        'Clé Groq manquante',
-        'Pour scanner tes cartes, tu as besoin d\'une clé API Groq gratuite.\n\n' +
-        '1. Va sur console.groq.com\n' +
-        '2. Crée un compte gratuit (Google ou email)\n' +
-        '3. Clique sur "API Keys" → "Create API Key"\n' +
-        '4. Appuie sur 🔑 en haut de l\'écran pour entrer ta clé\n\n' +
-        'C\'est 100% gratuit, sans carte bancaire.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
     if (!permission?.granted) {
       const r = await requestPermission();
       if (!r.granted) {
