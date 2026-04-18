@@ -41,8 +41,10 @@ def main():
         print(f"  #{i:02d}: {len(kp)} keypoints, des shape {des.shape}")
 
     OUT_PATH.parent.mkdir(exist_ok=True)
-    with open(OUT_PATH, "wb") as f:
+    tmp_path = OUT_PATH.with_suffix(".pkl.tmp")
+    with open(tmp_path, "wb") as f:
         pickle.dump(data, f)
+    tmp_path.rename(OUT_PATH)
 
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\nSaved {len(data)} refs -> {OUT_PATH}")

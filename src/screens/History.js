@@ -2,16 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   FlatList,
   TouchableOpacity,
   Modal,
   StyleSheet,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getHistory, deleteGame } from '../utils/storage';
 import Results from './Results';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
+
+const BONHOMME = require('../../assets/BonhommeFaraway-removebg-preview.png');
+
+const MINI_LABEL_W = 32;
+const MINI_HEADER_H = 44;
+const MINI_TOTAL_H = 50;
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -27,36 +35,79 @@ function formatDate(iso) {
 }
 
 function GameCard({ game, onPress, onDelete }) {
-  const winner = game.players.find((p) => p.rank === 1);
+  const { width: screenW } = useWindowDimensions();
+  const players = game.players;
+  const n = players.length;
+  const cardW = screenW - SPACING.md * 2;
+  const colW = Math.max(40, Math.floor((cardW - MINI_LABEL_W) / n));
+  const nameFontSize = colW >= 70 ? 12 : colW >= 54 ? 10 : 9;
+  const scoreFontSize = colW >= 60 ? 16 : colW >= 48 ? 13 : 11;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.cardHeader}>
+
+      {/* Date + suppression */}
+      <View style={styles.cardMeta}>
         <Text style={styles.cardDate}>{formatDate(game.date)}</Text>
-        <TouchableOpacity
-          onPress={onDelete}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
+        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Text style={styles.cardDelete}>✕</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.scoreBar}>
-        {game.players.map((p, i) => {
-          const isWinner = p.rank === 1;
-          return (
-            <View key={i} style={[styles.scoreItem, isWinner && styles.scoreItemWinner]}>
-              <Text
-                style={[styles.scoreName, isWinner && styles.scoreNameWinner]}
-                numberOfLines={1}
+
+      {/* Mini fiche de score */}
+      <View style={styles.miniGrid}>
+
+        {/* Ligne noms */}
+        <View style={styles.miniRow}>
+          <View style={[styles.miniLabelCell, styles.miniHeaderLabelCell, { width: MINI_LABEL_W, height: MINI_HEADER_H }]}>
+            <Image source={BONHOMME} style={styles.miniBonhomme} resizeMode="contain" />
+          </View>
+          {players.map((p, i) => {
+            const isWinner = p.rank === 1;
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.miniHeaderCell,
+                  { width: colW, height: MINI_HEADER_H },
+                  isWinner && styles.miniWinnerHeaderCell,
+                ]}
               >
-                {isWinner ? '👑 ' : ''}{p.name}
-              </Text>
-              <Text style={[styles.scoreTotal, isWinner && styles.scoreTotalWinner]}>
-                {p.total}
-              </Text>
-            </View>
-          );
-        })}
+                <Text
+                  style={[styles.miniName, isWinner && styles.miniNameWinner, { fontSize: nameFontSize }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {p.name || '—'}
+                </Text>
+                <Text style={[styles.miniRankText, isWinner && styles.miniCrownText]}>
+                  {isWinner ? '👑' : `#${p.rank}`}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Ligne totaux */}
+        <View style={[styles.miniRow, styles.miniTotalRow]}>
+          <View style={[styles.miniLabelCell, styles.miniTotalLabelCell, { width: MINI_LABEL_W, height: MINI_TOTAL_H }]}>
+            <Text style={styles.miniTotalLabel}>T</Text>
+          </View>
+          {players.map((p, i) => {
+            const isWinner = p.rank === 1;
+            const boxSize = Math.min(36, colW - 8);
+            return (
+              <View key={i} style={[styles.miniTotalCell, { width: colW, height: MINI_TOTAL_H }]}>
+                <View style={[styles.miniTotalBox, isWinner && styles.miniTotalBoxWinner, { width: boxSize, height: boxSize }]}>
+                  <Text style={[styles.miniTotalScore, { fontSize: scoreFontSize }]}>
+                    {p.total}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
       </View>
     </TouchableOpacity>
   );
@@ -161,35 +212,69 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     overflow: 'hidden',
   },
-  cardHeader: {
+  cardMeta: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.sm, paddingVertical: 0,
   },
   cardDate: { fontSize: 11, color: COLORS.textLight + 'AA', fontWeight: '500' },
   cardDelete: { fontSize: FONTS.small, color: COLORS.textLight, padding: SPACING.xs },
 
-  scoreBar: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+  // ── Mini fiche de score ──
+  miniGrid: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    overflow: 'hidden',
   },
-  scoreItem: {
-    flex: 1, alignItems: 'center', paddingHorizontal: SPACING.xs,
+  miniRow: { flexDirection: 'row', backgroundColor: COLORS.cardBg },
+  miniLabelCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    backgroundColor: '#E8E4DE',
   },
-  scoreItemWinner: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  miniHeaderLabelCell: { backgroundColor: '#D8D0C8' },
+  miniTotalLabelCell: { backgroundColor: 'rgba(0,0,0,0.12)' },
+  miniBonhomme: { width: 24, height: 24 },
+  miniHeaderCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.border,
+    paddingHorizontal: 2,
+    gap: 2,
+    backgroundColor: '#E8E4DE',
+  },
+  miniWinnerHeaderCell: {
+    backgroundColor: COLORS.primary + '22',
+    borderBottomColor: COLORS.border,
+  },
+  miniName: { fontWeight: '700', color: COLORS.text, textAlign: 'center' },
+  miniNameWinner: { color: COLORS.primary },
+  miniRankText: { fontSize: 9, color: COLORS.textLight, fontWeight: '600' },
+  miniCrownText: { fontSize: 10, color: COLORS.primary },
+  miniTotalRow: { backgroundColor: COLORS.primary },
+  miniTotalCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255,255,255,0.15)',
+  },
+  miniTotalLabel: { fontSize: FONTS.subtitle, fontWeight: '900', color: COLORS.white },
+  miniTotalBox: {
     borderRadius: 6,
-    paddingVertical: 2,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  scoreName: {
-    fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: '600', textAlign: 'center',
+  miniTotalBoxWinner: {
+    borderColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
-  scoreNameWinner: { color: COLORS.white },
-  scoreTotal: {
-    fontSize: FONTS.subtitle, fontWeight: '700', color: 'rgba(255,255,255,0.75)',
-  },
-  scoreTotalWinner: { color: COLORS.white, fontWeight: '900' },
+  miniTotalScore: { fontWeight: '800', color: COLORS.white },
 
   empty: {
     flex: 1, justifyContent: 'center', alignItems: 'center',

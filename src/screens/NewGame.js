@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,11 @@ import ScanModal from '../components/ScanModal';
 import GroqKeyModal from '../components/GroqKeyModal';
 import Results from './Results';
 import { calculateAllScores } from '../utils/scoring';
-import { saveGame } from '../utils/storage';
+import { saveGame, getLastPlayerNames, saveLastPlayerNames } from '../utils/storage';
 import { COLORS, SPACING, FONTS } from '../constants/theme';
 
 let nextId = 3;
-const makePlayer = (id, name = '') => ({ id, name, scanned: false, cards: null });
-const resetNextId = () => { nextId = 3; };
+const makePlayer = (id, name = '', suggestedName = '') => ({ id, name, scanned: false, cards: null, suggestedName });
 
 export default function NewGame() {
   const insets = useSafeAreaInsets();
@@ -29,6 +28,14 @@ export default function NewGame() {
   const [scanningPlayer, setScanningPlayer] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [showGroqKey, setShowGroqKey] = useState(false);
+
+  useEffect(() => {
+    getLastPlayerNames().then((names) => {
+      if (!names.length) return;
+      nextId = names.length + 1;
+      setPlayers(names.map((name, i) => makePlayer(i + 1, '', name)));
+    });
+  }, []);
 
   const allScanned = players.length >= 1 && players.every((p) => p.scanned);
 
@@ -59,7 +66,7 @@ export default function NewGame() {
 
   const handleNewGame = async () => {
     const playersData = players.map((p, i) => ({
-      name: p.name || `Joueur ${i + 1}`,
+      name: p.name || p.suggestedName || `Joueur ${i + 1}`,
       regions: p.cards?.regions ?? [],
       sanctuaries: p.cards?.sanctuaries ?? [],
     }));
@@ -74,9 +81,11 @@ export default function NewGame() {
         sanctuaries: playersData.find((p) => p.name === s.name)?.sanctuaries ?? [],
       })),
     });
+    const names = playersData.map((p) => p.name);
+    await saveLastPlayerNames(names);
     setShowResults(false);
-    resetNextId();
-    setPlayers([makePlayer(1), makePlayer(2)]);
+    nextId = names.length + 1;
+    setPlayers(names.map((name, i) => makePlayer(i + 1, '', name)));
   };
 
   return (
@@ -113,7 +122,7 @@ export default function NewGame() {
             )}
             <TextInput
               style={styles.input}
-              placeholder={`Nom du joueur ${index + 1}`}
+              placeholder={player.suggestedName || `Nom du joueur ${index + 1}`}
               placeholderTextColor={COLORS.textLight}
               value={player.name}
               onChangeText={(text) => updateName(player.id, text)}
@@ -154,7 +163,7 @@ export default function NewGame() {
 
       <ScanModal
         visible={scanningPlayer !== null}
-        playerName={scanningPlayer?.name || `Joueur ${players.indexOf(scanningPlayer) + 1}`}
+        playerName={scanningPlayer?.name || scanningPlayer?.suggestedName || `Joueur ${players.indexOf(scanningPlayer) + 1}`}
         onClose={() => setScanningPlayer(null)}
         onComplete={handleScanComplete}
       />
@@ -164,7 +173,7 @@ export default function NewGame() {
       <Modal visible={showResults} animationType="slide" statusBarTranslucent>
         <Results
           players={players.map((p, i) => ({
-            name: p.name || `Joueur ${i + 1}`,
+            name: p.name || p.suggestedName || `Joueur ${i + 1}`,
             regions:    p.cards?.regions    ?? [],
             sanctuaries: p.cards?.sanctuaries ?? [],
           }))}

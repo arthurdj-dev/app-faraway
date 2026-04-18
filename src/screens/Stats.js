@@ -60,7 +60,9 @@ function computeStats(games) {
           if (!bestCard || topCard > bestCard.points) {
             bestCard = { name: p.name, points: topCard, date: game.date, regions, sanctuaries };
           }
-        } catch {}
+        } catch (e) {
+          if (__DEV__) console.warn('[Stats] scoring error:', e);
+        }
       }
     }
   }

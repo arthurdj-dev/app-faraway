@@ -21,6 +21,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import logging
 
 BACKEND_DIR = Path(__file__).parent
 DESCRIPTORS_PATH = BACKEND_DIR / "sanctuary_descriptors.pkl"
@@ -39,6 +40,9 @@ MIN_QUAD_AREA_FRAC = 0.01
 MAX_QUAD_AREA_FRAC = 0.6
 MAX_SIDE_RATIO = 4.0
 IMAGE_MAX_DIM = 3000
+MAX_IMAGE_B64_BYTES = 10 * 1024 * 1024  # 10 MB
+
+logger = logging.getLogger(__name__)
 
 
 def _load_refs():
@@ -52,17 +56,22 @@ def _load_refs():
     return refs
 
 
-print("Loading reference descriptors...")
-REFS = _load_refs()
-print(f"Loaded {len(REFS)} sanctuaires.")
+logging.basicConfig(level=logging.INFO)
+logger.info("Loading reference descriptors...")
+try:
+    REFS = _load_refs()
+except Exception as exc:
+    logger.exception("Failed to load sanctuary descriptors")
+    raise RuntimeError(f"Cannot start: {exc}") from exc
+logger.info("Loaded %d sanctuaires.", len(REFS))
 
 
 app = FastAPI(title="Faraway Sanctuary Matcher")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
@@ -100,6 +109,8 @@ class MatchResponse(BaseModel):
 def decode_image(b64: str) -> np.ndarray:
     if "," in b64:
         b64 = b64.split(",", 1)[1]
+    if len(b64) > MAX_IMAGE_B64_BYTES:
+        raise ValueError(f"Image trop grande ({len(b64) // 1024} KB, max {MAX_IMAGE_B64_BYTES // 1024} KB)")
     buf = base64.b64decode(b64)
     arr = np.frombuffer(buf, dtype=np.uint8)
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)

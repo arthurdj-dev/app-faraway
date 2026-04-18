@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -7,6 +7,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import TabBar from './src/components/TabBar';
 import NewGame from './src/screens/NewGame';
 import History from './src/screens/History';
@@ -19,6 +20,10 @@ const TABS = ['Nouvelle partie', 'Historique', 'Statistiques'];
 function AppContent() {
   const [activeTab, setActiveTab] = useState(0);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  }, []);
 
   const handleTabPress = (index) => {
     scrollRef.current?.scrollTo({ x: index * width, animated: true });

@@ -127,6 +127,7 @@ function calcReward(reward, ctx) {
 
     case 'per_biome_group': {
       // Nombre de groupes complets (1 carte de chaque couleur listée)
+      if (!reward.biomes?.length) return 0;
       const groups = Math.min(...reward.biomes.map((b) => ctx.biomes[b] ?? 0));
       return reward.points * groups;
     }

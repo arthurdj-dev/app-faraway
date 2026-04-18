@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const GROQ_KEY        = 'groq_api_key';
-const SCAN_SKIP_GUIDE = 'scan_skip_guide';
-const HISTORY_KEY     = 'game_history';
+const GROQ_KEY          = 'groq_api_key';
+const SCAN_SKIP_GUIDE   = 'scan_skip_guide';
+const HISTORY_KEY       = 'game_history';
+const LAST_PLAYERS_KEY  = 'last_player_names';
 
 export async function getGroqApiKey() {
   return await AsyncStorage.getItem(GROQ_KEY);
@@ -24,11 +25,28 @@ export async function setScanSkipGuide(value) {
   await AsyncStorage.setItem(SCAN_SKIP_GUIDE, value ? 'true' : 'false');
 }
 
+// ─── Derniers joueurs ────────────────────────────────────────────────────
+
+export async function getLastPlayerNames() {
+  const raw = await AsyncStorage.getItem(LAST_PLAYERS_KEY);
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
+export async function saveLastPlayerNames(names) {
+  await AsyncStorage.setItem(LAST_PLAYERS_KEY, JSON.stringify(names));
+}
+
 // ─── Historique des parties ───────────────────────────────────────────────
 
 export async function getHistory() {
   const raw = await AsyncStorage.getItem(HISTORY_KEY);
-  return raw ? JSON.parse(raw) : [];
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 export async function saveGame(game) {

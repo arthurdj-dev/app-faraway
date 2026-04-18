@@ -1,41 +1,43 @@
-/**
- * Écran Résultats — feuille de score style Faraway
- *
- * Lignes : carte 1 → 8 (points par région), sanctuaires, total
- * Colonnes : une par joueur (adaptatif)
- * Gagnant mis en évidence (colonne surlignée + couronne)
- */
-
 import React, { useMemo } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateAllScores } from '../utils/scoring';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const BONHOMME   = require('../../assets/BonhommeFaraway-removebg-preview.png');
+const SANCTUAIRE = require('../../assets/Sanctuaire-removebg-preview.png');
 
-const ROW_LABEL_W = 36;
-const ROW_H       = 44;
-const HEADER_H    = 56;
-const TOTAL_H     = 56;
+const ROW_LABEL_W = 40;
+const ROW_H       = 40;
+const HEADER_H    = 52;
+const TOTAL_H     = 64;
 
 export default function Results({ players, onNewGame, backLabel }) {
-  const insets = useSafeAreaInsets();
+  const insets  = useSafeAreaInsets();
+  const { width: screenW } = useWindowDimensions();
 
   const scored = useMemo(() => calculateAllScores(players), [players]);
   const n      = scored.length;
 
-  // Largeur de chaque colonne joueur
-  const colW = Math.max(64, Math.floor((SCREEN_W - ROW_LABEL_W) / n));
+  // Display in original player order (score order kept only for podium/winner)
+  const displayScored = useMemo(() => {
+    const map = new Map(scored.map((p) => [p.name, p]));
+    return players.map((p) => map.get(p.name) ?? p);
+  }, [players, scored]);
 
-  // Points par région pour chaque joueur (index 0 = région jouée en 1ère)
+  const colW           = Math.max(44, Math.floor((screenW - SPACING.md * 2 - ROW_LABEL_W) / n));
+  const totalBoxSize  = Math.min(46, colW - 6);
+  const totalFontSize = colW >= 64 ? 18 : colW >= 52 ? 16 : 14;
+  const nameFontSize   = colW >= 70 ? 13 : colW >= 56 ? 11 : 9;
+
   function regionPoints(playerResult, playIndex) {
     const entry = playerResult.breakdown.find(
       (b) => b.source === 'region' && b.playIndex === playIndex
@@ -49,12 +51,11 @@ export default function Results({ players, onNewGame, backLabel }) {
       .reduce((s, b) => s + b.subtotal, 0);
   }
 
-  const winner = scored[0]; // déjà trié
+  const winner = scored[0];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
 
-      {/* ── Titre ── */}
       <Text style={styles.title}>Résultats</Text>
 
       <ScrollView
@@ -62,13 +63,14 @@ export default function Results({ players, onNewGame, backLabel }) {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + SPACING.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Grille ── */}
         <View style={styles.grid}>
 
-          {/* En-tête : noms des joueurs */}
+          {/* ── En-tête ── */}
           <View style={styles.row}>
-            <View style={[styles.labelCell, { height: HEADER_H }]} />
-            {scored.map((p) => {
+            <View style={[styles.labelCell, styles.headerLabelCell, { height: HEADER_H }]}>
+              <Image source={BONHOMME} style={styles.bonhommeImg} resizeMode="contain" />
+            </View>
+            {displayScored.map((p) => {
               const isWinner = p.rank === 1;
               return (
                 <View
@@ -79,29 +81,29 @@ export default function Results({ players, onNewGame, backLabel }) {
                     isWinner && styles.winnerHeaderCell,
                   ]}
                 >
-                  {isWinner && <Text style={styles.crown}>👑</Text>}
                   <Text
-                    style={[styles.headerName, isWinner && styles.winnerName]}
+                    style={[styles.headerName, isWinner && styles.winnerName, { fontSize: nameFontSize }]}
                     numberOfLines={1}
+                    ellipsizeMode="tail"
                   >
                     {p.name || '—'}
                   </Text>
-                  {p.rank > 1 && (
-                    <Text style={styles.rankText}>#{p.rank}</Text>
-                  )}
+                  <Text style={[styles.rankText, isWinner && styles.crownText]}>
+                    {isWinner ? '👑' : `#${p.rank}`}
+                  </Text>
                 </View>
               );
             })}
           </View>
 
-          {/* Lignes Régions 1–8 */}
+          {/* ── Régions 1–8 ── */}
           {Array.from({ length: 8 }, (_, i) => (
             <View key={i} style={[styles.row, i % 2 === 0 && styles.rowAlt]}>
               <View style={[styles.labelCell, { height: ROW_H }]}>
                 <Text style={styles.labelText}>{i + 1}</Text>
               </View>
-              {scored.map((p) => {
-                const pts = regionPoints(p, i);
+              {displayScored.map((p) => {
+                const pts      = regionPoints(p, i);
                 const isWinner = p.rank === 1;
                 return (
                   <View
@@ -121,16 +123,15 @@ export default function Results({ players, onNewGame, backLabel }) {
             </View>
           ))}
 
-          {/* Ligne séparatrice */}
           <View style={styles.divider} />
 
-          {/* Ligne Sanctuaires */}
+          {/* ── Sanctuaires ── */}
           <View style={styles.row}>
             <View style={[styles.labelCell, { height: ROW_H }]}>
-              <Text style={styles.labelIcon}>⛩</Text>
+              <Image source={SANCTUAIRE} style={styles.sanctuaireImg} resizeMode="contain" />
             </View>
-            {scored.map((p) => {
-              const pts = sanctuaryPoints(p);
+            {displayScored.map((p) => {
+              const pts      = sanctuaryPoints(p);
               const isWinner = p.rank === 1;
               return (
                 <View
@@ -149,25 +150,20 @@ export default function Results({ players, onNewGame, backLabel }) {
             })}
           </View>
 
-          {/* Ligne Total */}
+          {/* ── Total ── */}
           <View style={[styles.row, styles.totalRow]}>
-            <View style={[styles.labelCell, { height: TOTAL_H }]}>
+            <View style={[styles.labelCell, styles.totalLabelCell, { height: TOTAL_H }]}>
               <Text style={styles.totalLabel}>T</Text>
             </View>
-            {scored.map((p) => {
+            {displayScored.map((p) => {
               const isWinner = p.rank === 1;
               return (
-                <View
-                  key={p.name}
-                  style={[
-                    styles.totalCell,
-                    { width: colW, height: TOTAL_H },
-                    isWinner && styles.winnerTotalCell,
-                  ]}
-                >
-                  <Text style={[styles.totalScore, isWinner && styles.winnerTotalScore]}>
-                    {p.total}
-                  </Text>
+                <View key={p.name} style={[styles.totalCell, { width: colW, height: TOTAL_H }]}>
+                  <View style={[styles.totalBox, isWinner && styles.totalBoxWinner, { width: totalBoxSize, height: totalBoxSize }]}>
+                    <Text style={[styles.totalScore, { fontSize: totalFontSize }]}>
+                      {p.total}
+                    </Text>
+                  </View>
                 </View>
               );
             })}
@@ -175,7 +171,7 @@ export default function Results({ players, onNewGame, backLabel }) {
 
         </View>
 
-        {/* ── Podium texte ── */}
+        {/* ── Podium ── */}
         <View style={styles.podium}>
           <Text style={styles.podiumTitle}>
             🏆 {winner.name || 'Joueur 1'} gagne avec {winner.total} points !
@@ -189,10 +185,10 @@ export default function Results({ players, onNewGame, backLabel }) {
 
       </ScrollView>
 
-      {/* ── Bouton Nouvelle partie ── */}
+      {/* ── Footer ── */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + SPACING.sm }]}>
         <TouchableOpacity style={styles.newGameBtn} onPress={onNewGame} activeOpacity={0.8}>
-          <Text style={styles.newGameBtnText}>{backLabel || 'Nouvelle partie'}</Text>
+          <Text style={styles.newGameBtnText}>{backLabel || 'Terminer'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -215,22 +211,17 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.md, paddingTop: SPACING.sm },
 
-  // ── Grille ──
   grid: {
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
 
-  row: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.cardBg,
-  },
-  rowAlt: {
-    backgroundColor: '#F0EDE8',
-  },
+  row: { flexDirection: 'row', backgroundColor: COLORS.cardBg },
+  rowAlt: { backgroundColor: '#F0EDE8' },
 
+  // ── Colonne label gauche ──
   labelCell: {
     width: ROW_LABEL_W,
     alignItems: 'center',
@@ -239,15 +230,28 @@ const styles = StyleSheet.create({
     borderRightColor: COLORS.border,
     backgroundColor: '#E8E4DE',
   },
+  headerLabelCell: {
+    backgroundColor: '#D8D0C8',
+  },
+  totalLabelCell: {
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
   labelText: {
     fontSize: FONTS.subtitle,
     fontWeight: '700',
     color: COLORS.text,
   },
-  labelIcon: {
-    fontSize: 18,
+  bonhommeImg: {
+    width: 28,
+    height: 28,
+  },
+  sanctuaireImg: {
+    width: 26,
+    height: 26,
+    tintColor: COLORS.text,
   },
 
+  // ── En-tête joueurs ──
   headerCell: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -261,58 +265,49 @@ const styles = StyleSheet.create({
   },
   winnerHeaderCell: {
     backgroundColor: COLORS.primary + '22',
-    borderBottomColor: COLORS.primary,
+    borderBottomColor: COLORS.border,
   },
-  crown: { fontSize: 14 },
   headerName: {
-    fontSize: FONTS.small,
+    fontSize: 13,
     fontWeight: '700',
     color: COLORS.text,
     textAlign: 'center',
   },
-  winnerName: {
-    color: COLORS.primary,
-  },
-  rankText: {
-    fontSize: 10,
-    color: COLORS.textLight,
-    fontWeight: '600',
-  },
+  winnerName: { color: COLORS.primary },
+  rankText: { fontSize: 10, color: COLORS.textLight, fontWeight: '600' },
+  crownText: { fontSize: 12, color: COLORS.primary },
 
+  // ── Cellules données ──
   cell: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRightWidth: 1,
     borderRightColor: COLORS.border,
   },
-  winnerCol: {
-    backgroundColor: COLORS.primary + '10',
-  },
-  cellText: {
-    fontSize: FONTS.body,
-    color: COLORS.textLight,
-  },
-  cellTextActive: {
-    color: COLORS.text,
-    fontWeight: '600',
-  },
+  winnerCol: { backgroundColor: COLORS.primary + '10' },
+  cellText: { fontSize: FONTS.body, color: COLORS.textLight },
+  cellTextActive: { color: COLORS.text, fontWeight: '600' },
 
-  divider: {
-    height: 2,
-    backgroundColor: COLORS.border,
-  },
+  divider: { height: 2, backgroundColor: COLORS.border },
 
-  totalRow: {
-    backgroundColor: COLORS.primary,
-  },
+  // ── Ligne total ──
+  totalRow: { backgroundColor: COLORS.primary },
   totalCell: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.2)',
+    borderRightColor: 'rgba(255,255,255,0.15)',
   },
-  winnerTotalCell: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  totalBox: {
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  totalBoxWinner: {
+    borderColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   totalLabel: {
     fontSize: FONTS.title,
@@ -320,15 +315,10 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   totalScore: {
-    fontSize: FONTS.title,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: COLORS.white,
   },
-  winnerTotalScore: {
-    fontSize: 28,
-    fontWeight: '900',
-  },
-
   // ── Podium ──
   podium: {
     marginTop: SPACING.lg,
@@ -346,10 +336,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     textAlign: 'center',
   },
-  podiumTie: {
-    fontSize: FONTS.small,
-    color: COLORS.textLight,
-  },
+  podiumTie: { fontSize: FONTS.small, color: COLORS.textLight },
 
   // ── Footer ──
   footer: {

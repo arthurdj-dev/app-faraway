@@ -93,7 +93,9 @@ async function callGroq(prompt, base64, apiKey, maxTokens = 512) {
   });
   if (!response.ok) throw new Error(`Groq ${response.status}: ${await response.text()}`);
   const data = await response.json();
-  return data.choices[0].message.content;
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('Réponse Groq vide ou inattendue');
+  return content;
 }
 
 // ─── Appel 1 : régions + zone sanctuaires ──────────────────────────────────
@@ -187,7 +189,7 @@ export async function scanTableau(photoUri) {
   // 1. Groq : régions + zone sanctuaires
   const regionsRaw = await callGroqRegions(resized.base64, apiKey);
   const board = parseModelJSON(regionsRaw, '"regions"');
-  console.log('[Groq regions parsed]', JSON.stringify(board, null, 2));
+  if (__DEV__) console.log('[Groq regions parsed]', JSON.stringify(board, null, 2));
 
   const results = [];
   const regionIds = [];
@@ -210,7 +212,7 @@ export async function scanTableau(photoUri) {
 
   if (expectedCount > 0 || zone) {
     const backendResp = await callBackendSanctuaries(resized.base64, zone, expectedCount);
-    console.log('[ORB backend]', JSON.stringify(backendResp, null, 2));
+    if (__DEV__) console.log('[ORB backend]', JSON.stringify(backendResp, null, 2));
 
     const detections = [...(backendResp.detections ?? [])].sort(
       (a, b) => quadMeanX(a.quad) - quadMeanX(b.quad),

@@ -59,7 +59,7 @@ function RegionCell({ item, width, height, onPress, selected }) {
   );
 }
 
-function SanctuaryCell({ item, width, height, onPress, selected }) {
+function SanctuaryCell({ item, width, height, onPress, selected, onRemove }) {
   const hasId = item.id != null;
   const img = hasId ? getSanctuaryImage(item.id) : null;
   const border = selected
@@ -68,27 +68,38 @@ function SanctuaryCell({ item, width, height, onPress, selected }) {
       ? COLORS.gold
       : COLORS.border;
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={[cellStyles.sanctBox, {
-        width, height, borderColor: border,
-        borderWidth: selected ? 3 : 2,
-      }]}
-    >
-      {img ? (
-        <Image source={img} style={cellStyles.sanctImg} resizeMode="cover" />
-      ) : (
-        <View style={cellStyles.sanctPlaceholder}>
-          <Text style={cellStyles.sanctPlaceholderTxt}>?</Text>
-        </View>
+    <View style={{ width, height }}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={[cellStyles.sanctBox, {
+          width, height, borderColor: border,
+          borderWidth: selected ? 3 : 2,
+        }]}
+      >
+        {img ? (
+          <Image source={img} style={cellStyles.sanctImg} resizeMode="cover" />
+        ) : (
+          <View style={cellStyles.sanctPlaceholder}>
+            <Text style={cellStyles.sanctPlaceholderTxt}>?</Text>
+          </View>
+        )}
+        {hasId && (
+          <View style={cellStyles.idTag}>
+            <Text style={cellStyles.idTagTxt}>#{item.id}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+      {onRemove && (
+        <TouchableOpacity
+          onPress={onRemove}
+          style={cellStyles.removeBtn}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        >
+          <Text style={cellStyles.removeBtnTxt}>×</Text>
+        </TouchableOpacity>
       )}
-      {hasId && (
-        <View style={cellStyles.idTag}>
-          <Text style={cellStyles.idTagTxt}>#{item.id}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -117,6 +128,16 @@ const cellStyles = StyleSheet.create({
   },
   idTagTxt: {
     color: COLORS.white, fontSize: 10, textAlign: 'center', fontWeight: '700',
+  },
+  removeBtn: {
+    position: 'absolute', top: 2, right: 2,
+    width: 14, height: 14, borderRadius: 7,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  removeBtnTxt: {
+    color: COLORS.white, fontSize: 11, fontWeight: '700',
+    lineHeight: 14, textAlign: 'center',
   },
 });
 
@@ -153,7 +174,7 @@ function PickerCell({ id, type, cellW, cellH, gap, isCurrent, isUsed, onPick }) 
   );
 }
 
-function CardPicker({ type, currentId, probableIds, usedIds, onPick, onCancel, insets }) {
+function CardPicker({ type, currentId, probableIds, usedIds, onPick, onCancel, onRemove, insets }) {
   const { width: winW, height: winH } = useWindowDimensions();
   const isSanct = type === 'sanctuary';
 
@@ -220,6 +241,13 @@ function CardPicker({ type, currentId, probableIds, usedIds, onPick, onCancel, i
   return (
     <View style={[pk.sheet, { maxHeight: winH * 0.85 }]}>
       <View style={pk.header}>
+        {isSanct && onRemove ? (
+          <TouchableOpacity onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={pk.remove}>Retirer</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 52 }} />
+        )}
         <Text style={pk.title}>
           {isSanct ? 'Choisir le Sanctuaire' : 'Choisir la carte Région'}
         </Text>
@@ -302,6 +330,7 @@ const pk = StyleSheet.create({
   },
   title: { fontSize: FONTS.subtitle, fontWeight: '700', color: COLORS.text },
   close: { color: COLORS.primary, fontSize: FONTS.body, fontWeight: '600' },
+  remove: { color: '#E03030', fontSize: FONTS.body, fontWeight: '600' },
   grid: {
     flexDirection: 'row', flexWrap: 'wrap',
   },
@@ -357,7 +386,11 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
     setEditingIndex(null);
   };
 
-  const handleClose = () => { reset(); onClose(); };
+  const handleClose = async () => {
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    reset();
+    onClose();
+  };
 
   useEffect(() => {
     if (visible) {
@@ -451,6 +484,18 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
     setEditingIndex(null);
   };
 
+  const removeSanctuary = (index) => {
+    setResults((prev) => prev.filter((r) => r.index !== index));
+  };
+
+
+  const addSanctuary = () => {
+    const maxIndex = results.length > 0 ? Math.max(...results.map((r) => r.index)) : -1;
+    const newItem = { index: maxIndex + 1, type: 'sanctuary', id: null, confidence: 'none', candidates: [] };
+    setResults((prev) => [...prev, newItem]);
+    setEditingIndex(maxIndex + 1);
+  };
+
   const handleConfirm = () => {
     const regions     = results.filter((r) => r.type === 'region').map((r) => ({ id: r.id }));
     const sanctuaries = results.filter((r) => r.type === 'sanctuary').map((r) => ({ id: r.id }));
@@ -479,11 +524,14 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const gridW = winW - SPACING.md * 2;
   const regionCellW = (gridW - GRID_GAP * 3) / 4;
   const regionCellH = regionCellW * 1.4;
-  const sanctCount = Math.max(1, sanctuaryItems.length);
-  const sanctCellW = Math.min(
-    regionCellW * 0.7,
-    (gridW - GRID_GAP * (sanctCount - 1)) / sanctCount,
-  );
+  const MAX_SANCT = 7;
+  const PLUS_BTN_W = 28;
+  const sanctCount = sanctuaryItems.length;
+  const canAddSanctuary = sanctCount < MAX_SANCT;
+  const plusSpace = canAddSanctuary ? PLUS_BTN_W + GRID_GAP : 0;
+  const sanctCellW = sanctCount > 0
+    ? Math.min(regionCellW * 0.7, (gridW - plusSpace - GRID_GAP * (sanctCount - 1)) / sanctCount)
+    : regionCellW * 0.5;
   const sanctCellH = sanctCellW * 1.4;
 
   // ─── Donnees pour le picker d'edition ───────────────────────────────
@@ -525,10 +573,8 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
             <View style={s.instructionBox}>
               <View style={s.schema}>
                 <View style={s.schemaRow}>
-                  {['S1','S2','S3','…'].map((l) => (
-                    <View key={l} style={[s.schemaCard, s.schemaCardSanctuary]}>
-                      <Text style={s.schemaCardTxt}>{l}</Text>
-                    </View>
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <View key={i} style={[s.schemaCard, s.schemaCardSanctuary]} />
                   ))}
                 </View>
                 <View style={s.schemaRow}>
@@ -563,10 +609,14 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
             <TouchableOpacity
               style={s.skipGuideBtn}
               onPress={async () => {
-                await setScanSkipGuide(true);
-                setSkipGuide(true);
+                const newVal = !skipGuide;
+                await setScanSkipGuide(newVal);
+                setSkipGuide(newVal);
               }}
             >
+              <View style={[s.checkbox, skipGuide && s.checkboxChecked]}>
+                {skipGuide && <Text style={s.checkmark}>✓</Text>}
+              </View>
               <Text style={s.skipGuideTxt}>Ne plus afficher ce guide</Text>
             </TouchableOpacity>
           </View>
@@ -600,7 +650,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
               <TouchableOpacity style={s.shutterBtn} onPress={takePhoto}>
                 <View style={s.shutterInner} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => exitCamera('instruction')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Text style={s.cancelWhite}>Annuler</Text>
               </TouchableOpacity>
             </View>
@@ -629,19 +679,26 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
               <Text style={s.sectionLabel}>Ton tableau reconstitué</Text>
 
               <View style={[s.board, { gap: GRID_GAP }]}>
-                {sanctuaryItems.length > 0 && (
-                  <View style={[s.boardRow, { gap: GRID_GAP, justifyContent: 'center' }]}>
-                    {sanctuaryItems.map((item) => (
-                      <SanctuaryCell
-                        key={item.index}
-                        item={item}
-                        width={sanctCellW}
-                        height={sanctCellH}
-                        onPress={() => setEditingIndex(item.index)}
-                      />
-                    ))}
-                  </View>
-                )}
+                <View style={[s.boardRow, { gap: GRID_GAP, justifyContent: 'center' }]}>
+                  {sanctuaryItems.map((item) => (
+                    <SanctuaryCell
+                      key={item.index}
+                      item={item}
+                      width={sanctCellW}
+                      height={sanctCellH}
+                      onPress={() => setEditingIndex(item.index)}
+                    />
+                  ))}
+                  {canAddSanctuary && (
+                    <TouchableOpacity
+                      style={[s.addSanctBtn, { width: PLUS_BTN_W, height: sanctCellH }]}
+                      onPress={addSanctuary}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={s.addSanctBtnTxt}>+</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
                 <View style={[s.boardRow, { gap: GRID_GAP }]}>
                   {regionsRow1.map((item) => (
@@ -708,7 +765,16 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
                 probableIds={editingItem.candidates || []}
                 usedIds={editingUsedIds}
                 onPick={applyEdit}
-                onCancel={() => setEditingIndex(null)}
+                onCancel={() => {
+                  if (editingItem.id === null && editingItem.type === 'sanctuary') {
+                    removeSanctuary(editingIndex);
+                  }
+                  setEditingIndex(null);
+                }}
+                onRemove={editingItem.type === 'sanctuary' ? () => {
+                  removeSanctuary(editingIndex);
+                  setEditingIndex(null);
+                } : undefined}
                 insets={insets}
               />
             )}
@@ -745,12 +811,13 @@ const s = StyleSheet.create({
   schema: { gap: 4, alignItems: 'flex-start' },
   schemaRow: { flexDirection: 'row', gap: 4 },
   schemaCard: {
-    width: 44, height: 30, borderRadius: 4,
+    width: 36, height: 36, borderRadius: 4,
     backgroundColor: COLORS.secondary + '25',
     borderWidth: 1, borderColor: COLORS.secondary,
     alignItems: 'center', justifyContent: 'center',
   },
   schemaCardSanctuary: {
+    width: 20, height: 36,
     backgroundColor: COLORS.gold + '25',
     borderColor: COLORS.gold,
   },
@@ -763,7 +830,20 @@ const s = StyleSheet.create({
   primaryBtnDisabled: { backgroundColor: COLORS.disabled },
   primaryBtnTxt: { color: COLORS.white, fontWeight: '700', fontSize: FONTS.body },
 
-  skipGuideBtn: { alignItems: 'center', paddingVertical: SPACING.xs },
+  skipGuideBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: SPACING.xs, gap: SPACING.xs,
+  },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 4,
+    borderWidth: 2, borderColor: COLORS.textLight,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  checkmark: { color: COLORS.white, fontSize: 13, fontWeight: '700', lineHeight: 16 },
   skipGuideTxt: { color: COLORS.textLight, fontSize: FONTS.small },
 
   secondaryBtn: {
@@ -851,4 +931,14 @@ const s = StyleSheet.create({
   warningTxt: { fontSize: FONTS.small, color: COLORS.primary, textAlign: 'center' },
 
   editOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+
+  addSanctBtn: {
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary + '80',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary + '12',
+  },
+  addSanctBtnTxt: { color: COLORS.primary, fontSize: 20, fontWeight: '300' },
 });
