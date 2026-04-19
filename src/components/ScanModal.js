@@ -428,6 +428,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const takePhoto = async () => {
     if (!cameraRef.current || taking) return;
     setTaking(true);
+    setTimeout(() => setTaking(false), 1000);
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.92,
@@ -466,7 +467,6 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
       setResults(res);
       setStep('results');
     } catch (e) {
-      setTaking(false);
       Alert.alert('Le scan a échoué', 'Recommence la photo.', [{ text: 'OK' }]);
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
       setStep('camera');
