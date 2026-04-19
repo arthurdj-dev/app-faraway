@@ -21,6 +21,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -378,12 +379,14 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const [results, setResults] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [skipGuide, setSkipGuide] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
   const reset = () => {
     setStep('instruction');
     setPhotoUri(null);
     setResults([]);
     setEditingIndex(null);
+    setTorchOn(false);
   };
 
   const handleClose = async () => {
@@ -611,7 +614,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
         {/* ── Étape 2 : Caméra ── */}
         {step === 'camera' && permission?.granted && (
           <View style={s.cameraContainer}>
-            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} ratio="4:3" />
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} ratio="4:3" enableTorch={torchOn} />
 
             <View style={s.cameraOverlay}>
               <View style={[s.cameraFrame, { width: frameW, height: frameH }]}>
@@ -633,6 +636,17 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
             </View>
 
             <View style={[s.cameraControls, { right: insets.right, width: shutterAreaW }]}>
+              <TouchableOpacity
+                style={[s.torchBtn, torchOn && s.torchBtnOn]}
+                onPress={() => setTorchOn((v) => !v)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={torchOn ? 'flash' : 'flash-off'}
+                  size={22}
+                  color={torchOn ? '#111' : COLORS.white}
+                />
+              </TouchableOpacity>
               <TouchableOpacity style={s.shutterBtn} onPress={takePhoto}>
                 <View style={s.shutterInner} />
               </TouchableOpacity>
@@ -891,6 +905,16 @@ const s = StyleSheet.create({
   },
   shutterInner: { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.white },
   cancelWhite: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '500' },
+  torchBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  torchBtnOn: {
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderColor: COLORS.white,
+  },
 
   // Traitement
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.lg, padding: SPACING.md },

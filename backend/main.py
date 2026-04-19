@@ -29,6 +29,7 @@ import logging
 BACKEND_DIR = Path(__file__).parent
 DESCRIPTORS_PATH = BACKEND_DIR / "sanctuary_descriptors.pkl"
 REGION_DESCRIPTORS_PATH = BACKEND_DIR / "region_descriptors.pkl"
+REGION_CORNERS_PATH = BACKEND_DIR / "region_corners.pkl"
 
 ORB_FEATURES = 10000
 LOWE_RATIO = 0.75
@@ -45,6 +46,12 @@ MAX_QUAD_AREA_FRAC = 0.6
 MAX_SIDE_RATIO = 4.0
 IMAGE_MAX_DIM = 3000
 MAX_IMAGE_B64_BYTES = 10 * 1024 * 1024  # 10 MB
+
+# Corner-template reading (doit coller a scripts/precompute_region_corners.py)
+CORNER_CANONICAL_SIZE = 600
+CORNER_FRAC = 0.22
+CORNER_ADAPT_BLOCK = 21
+CORNER_ADAPT_C = 10
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +85,17 @@ except FileNotFoundError:
     logger.warning("region_descriptors.pkl not found — run scripts/precompute_region_descriptors.py first")
 except Exception as exc:
     logger.exception("Failed to load region descriptors")
+    raise RuntimeError(f"Cannot start: {exc}") from exc
+
+try:
+    with open(REGION_CORNERS_PATH, "rb") as f:
+        REGION_CORNERS: dict[int, np.ndarray] = pickle.load(f)
+    logger.info("Loaded %d region corner templates.", len(REGION_CORNERS))
+except FileNotFoundError:
+    REGION_CORNERS = {}
+    logger.warning("region_corners.pkl not found — run scripts/precompute_region_corners.py first")
+except Exception as exc:
+    logger.exception("Failed to load region corners")
     raise RuntimeError(f"Cannot start: {exc}") from exc
 
 
@@ -199,9 +217,7 @@ def quad_iou(q1, q2, shape):
     return inter / union if union else 0.0
 
 
-def _match_against(refs: dict, img: np.ndarray, expected_count: Optional[int],
-                   zone: Optional[Zone] = None) -> list[Detection]:
-    """Core ORB matching pipeline: feature extraction, NMS, candidate collection."""
+def _prepare_image(img: np.ndarray, zone: Optional[Zone] = None) -> np.ndarray:
     if zone is not None:
         h, w = img.shape[:2]
         x0 = int(max(0.0, min(1.0, zone.x)) * w)
@@ -211,9 +227,11 @@ def _match_against(refs: dict, img: np.ndarray, expected_count: Optional[int],
         if x1 <= x0 or y1 <= y0:
             raise ValueError("Invalid zone")
         img = img[y0:y1, x0:x1]
+    return resize_max(img, IMAGE_MAX_DIM)
 
-    img = resize_max(img, IMAGE_MAX_DIM)
 
+def _orb_match(refs: dict, img: np.ndarray, expected_count: Optional[int]) -> list[Detection]:
+    """Core ORB pipeline on an already-prepared image: features, NMS, candidates."""
     orb = cv2.ORB_create(nfeatures=ORB_FEATURES)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     kp_q, des_q = orb.detectAndCompute(gray, None)
@@ -277,6 +295,105 @@ def _match_against(refs: dict, img: np.ndarray, expected_count: Optional[int],
     return detections
 
 
+def _match_against(refs: dict, img: np.ndarray, expected_count: Optional[int],
+                   zone: Optional[Zone] = None) -> list[Detection]:
+    return _orb_match(refs, _prepare_image(img, zone), expected_count)
+
+
+# ─── Lecture du numero par template-matching (regions) ────────────────────
+
+def order_quad(quad: np.ndarray) -> np.ndarray:
+    """Ordonne les 4 points : top-left, top-right, bottom-right, bottom-left."""
+    pts = np.asarray(quad, dtype=np.float32).reshape(4, 2)
+    s = pts.sum(axis=1)
+    d = pts[:, 1] - pts[:, 0]  # y - x
+    ordered = np.zeros((4, 2), dtype=np.float32)
+    ordered[0] = pts[np.argmin(s)]      # top-left
+    ordered[2] = pts[np.argmax(s)]      # bottom-right
+    ordered[1] = pts[np.argmin(d)]      # top-right
+    ordered[3] = pts[np.argmax(d)]      # bottom-left
+    return ordered
+
+
+def rectify_card(img: np.ndarray, quad: np.ndarray, size: int = CORNER_CANONICAL_SIZE) -> np.ndarray:
+    src = order_quad(quad)
+    dst = np.array(
+        [[0, 0], [size - 1, 0], [size - 1, size - 1], [0, size - 1]],
+        dtype=np.float32,
+    )
+    H = cv2.getPerspectiveTransform(src, dst)
+    return cv2.warpPerspective(img, H, (size, size))
+
+
+def _corner_binary(card: np.ndarray) -> np.ndarray:
+    size = card.shape[0]
+    cp = int(size * CORNER_FRAC)
+    corner = card[:cp, :cp]
+    if corner.ndim == 3:
+        corner = cv2.cvtColor(corner, cv2.COLOR_BGR2GRAY)
+    return cv2.adaptiveThreshold(
+        corner, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        CORNER_ADAPT_BLOCK, CORNER_ADAPT_C,
+    )
+
+
+def identify_region(card: np.ndarray, corners_db: dict[int, np.ndarray]) -> list[tuple[int, float]]:
+    """Retourne tous les ids tries par score NCC decroissant."""
+    query = _corner_binary(card)
+    scores: list[tuple[int, float]] = []
+    for rid, ref in corners_db.items():
+        if ref.shape != query.shape:
+            ref = cv2.resize(ref, (query.shape[1], query.shape[0]))
+        res = cv2.matchTemplate(query, ref, cv2.TM_CCOEFF_NORMED)
+        scores.append((rid, float(res[0, 0])))
+    scores.sort(key=lambda t: t[1], reverse=True)
+    return scores
+
+
+def _reidentify_via_corners(
+    img: np.ndarray,
+    orb_detections: list[Detection],
+    corners_db: dict[int, np.ndarray],
+) -> list[Detection]:
+    """Pour chaque quad ORB, rectifie la carte et relit son numero par NCC."""
+    used_ids: set[int] = set()
+    out: list[Detection] = []
+    for d in orb_detections:
+        if not d.quad:
+            out.append(d)
+            continue
+        try:
+            card = rectify_card(img, np.asarray(d.quad, dtype=np.float32))
+        except cv2.error:
+            out.append(d)
+            continue
+
+        scores = identify_region(card, corners_db)
+        # Prend le meilleur score non deja assigne pour respecter l'unicite
+        chosen = next(((rid, sc) for rid, sc in scores if rid not in used_ids), scores[0])
+        used_ids.add(chosen[0])
+
+        # inliers : on encode le score NCC [-1, 1] -> [0, 1000] pour garder un int
+        inliers = max(0, int(chosen[1] * 1000))
+
+        alts = [
+            Candidate(id=rid, inliers=max(0, int(sc * 1000)))
+            for rid, sc in scores
+            if rid != chosen[0]
+        ][:MAX_ALTERNATIVES]
+
+        out.append(Detection(
+            id=chosen[0],
+            inliers=inliers,
+            good_matches=d.good_matches,
+            quad=d.quad,
+            candidates=alts,
+        ))
+    return out
+
+
 @app.post("/match-sanctuaries", response_model=MatchResponse)
 def match_sanctuaries(req: MatchRequest) -> MatchResponse:
     t0 = time.time()
@@ -303,9 +420,18 @@ def match_regions(req: MatchRequest) -> MatchResponse:
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
     expected = req.expected_count if req.expected_count else 8
     try:
-        detections = _match_against(REGION_REFS, img, expected)
+        prepared = _prepare_image(img, req.zone)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    # 1. Localisation via ORB (robuste aux deformations perspective)
+    detections = _orb_match(REGION_REFS, prepared, expected)
+
+    # 2. Re-identification par template-matching du coin haut-gauche
+    #    (robuste a la luminosite — remplace l'id ORB par le numero lu).
+    if REGION_CORNERS and detections:
+        detections = _reidentify_via_corners(prepared, detections, REGION_CORNERS)
+
     elapsed_ms = int((time.time() - t0) * 1000)
     return MatchResponse(detections=detections, elapsed_ms=elapsed_ms)
 
@@ -316,4 +442,5 @@ def health():
         "status": "ok",
         "sanctuaries_loaded": len(REFS),
         "regions_loaded": len(REGION_REFS),
+        "region_corners_loaded": len(REGION_CORNERS),
     }

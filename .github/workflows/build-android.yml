@@ -39,14 +39,14 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build release APK
+      - name: Build debug APK (dev-client)
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-faraway-release
-          path: android/app/build/outputs/apk/release/*.apk
+          name: app-faraway-debug
+          path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 7
