@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, avec-groq]
   workflow_dispatch:  # permet de déclencher manuellement depuis GitHub
 
 jobs:
