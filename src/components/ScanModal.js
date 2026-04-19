@@ -36,13 +36,7 @@ const REGION_TOTAL = 77; // IDs 0..76
 
 function RegionCell({ item, width, height, onPress, selected }) {
   const hasId = item.id != null;
-  const border = selected
-    ? COLORS.primary
-    : item.confidence === 'none'
-      ? COLORS.primary
-      : item.confidence === 'low'
-        ? COLORS.gold
-        : COLORS.border;
+  const border = selected ? COLORS.primary : COLORS.border;
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -62,11 +56,7 @@ function RegionCell({ item, width, height, onPress, selected }) {
 function SanctuaryCell({ item, width, height, onPress, selected, onRemove }) {
   const hasId = item.id != null;
   const img = hasId ? getSanctuaryImage(item.id) : null;
-  const border = selected
-    ? COLORS.primary
-    : item.confidence === 'low'
-      ? COLORS.gold
-      : COLORS.border;
+  const border = selected ? COLORS.primary : COLORS.border;
   return (
     <View style={{ width, height }}>
       <TouchableOpacity
@@ -378,6 +368,8 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
   const [results, setResults] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [skipGuide, setSkipGuide] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [taking, setTaking] = useState(false);
 
   const reset = () => {
     setStep('instruction');
@@ -429,11 +421,13 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
 
   const exitCamera = async (nextStep) => {
     await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    setTorchOn(false);
     setStep(nextStep);
   };
 
   const takePhoto = async () => {
-    if (!cameraRef.current) return;
+    if (!cameraRef.current || taking) return;
+    setTaking(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.92,
@@ -472,8 +466,10 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
       setResults(res);
       setStep('results');
     } catch (e) {
-      Alert.alert('Erreur lors de l\'analyse', e.message);
-      await exitCamera('camera');
+      setTaking(false);
+      Alert.alert('Le scan a échoué', 'Recommence la photo.', [{ text: 'OK' }]);
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+      setStep('camera');
     }
   };
 
@@ -625,7 +621,7 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
         {/* ── Étape 2 : Caméra ── */}
         {step === 'camera' && permission?.granted && (
           <View style={s.cameraContainer}>
-            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} ratio="4:3" />
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" zoom={0} ratio="4:3" enableTorch={torchOn} />
 
             <View style={s.cameraOverlay}>
               <View style={[s.cameraFrame, { width: frameW, height: frameH }]}>
@@ -647,7 +643,14 @@ export default function ScanModal({ visible, playerName, onClose, onComplete }) 
             </View>
 
             <View style={[s.cameraControls, { right: insets.right, width: shutterAreaW }]}>
-              <TouchableOpacity style={s.shutterBtn} onPress={takePhoto}>
+              <TouchableOpacity
+                onPress={() => setTorchOn((v) => !v)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[s.torchBtn, torchOn && s.torchBtnOn]}
+              >
+                <Text style={s.torchIcon}>🔦</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.shutterBtn, taking && { opacity: 0.4 }]} onPress={takePhoto} disabled={taking}>
                 <View style={s.shutterInner} />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -905,6 +908,13 @@ const s = StyleSheet.create({
   },
   shutterInner: { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.white },
   cancelWhite: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '500' },
+  torchBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  torchBtnOn: { backgroundColor: 'rgba(255,220,80,0.55)' },
+  torchIcon: { fontSize: 20 },
 
   // Traitement
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.lg, padding: SPACING.md },
